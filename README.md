@@ -325,6 +325,7 @@ cd apps/server && pnpm run db:reseed-knowledge
 
 - **包管理器必须是 pnpm**，项目依赖 pnpm 的原生补丁机制和 workspace
 - **monorepo**：所有命令可在根目录执行（`pnpm run dev:backend` / `pnpm run dev:admin`），也可进入 `apps/` 子目录
+- **`/generated/prisma` 已忽略**：该目录由 `prisma generate` 自动生成（Prisma Client 代码）。它是构建产物，每次 `pnpm install` 或 schema 变更后自动重新生成，不应手动编辑，也无需纳入版本控制
 - `.env.local` 存放真实密钥，已加入 `.gitignore`，切勿提交
 - RAG 知识库写入前需先创建集合（`travel-knowledge-base`），详见管理后台"知识库"页面
 - 管理后台端口可能自动递增（若 5174 被占用），注意 Vite 终端输出
