@@ -5,9 +5,9 @@
   "description": "旅途 · AI 旅行规划助手 Monorepo",
   "scripts": {
     "dev:backend": "cd travel-nest && pnpm run start:dev",
-    "dev:admin": "cd travel-nest/ui/admin-ui && pnpm run dev",
+    "dev:admin": "cd admin-ui && pnpm run dev",
     "build:backend": "cd travel-nest && pnpm run build",
-    "build:admin": "cd travel-nest/ui/admin-ui && pnpm run build",
+    "build:admin": "cd admin-ui && pnpm run build",
     "db:migrate": "cd travel-nest && pnpm run db:migrate",
     "db:migrate:dev": "cd travel-nest && pnpm run db:migrate:dev",
     "db:studio": "cd travel-nest && pnpm run db:studio",

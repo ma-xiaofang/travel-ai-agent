@@ -51,6 +51,6 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 travel-nest/generated/prisma/
 
 # Admin UI build & screenshots
-travel-nest/ui/admin-ui/dist/
-travel-nest/ui/admin-ui/screenshots/
-travel-nest/ui/admin-ui/*.png
+admin-ui/dist/
+admin-ui/screenshots/
+admin-ui/*.png

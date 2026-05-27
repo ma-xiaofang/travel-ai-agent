@@ -13,6 +13,46 @@ importers:
 
   .: {}
 
+  admin-ui:
+    dependencies:
+      '@element-plus/icons-vue':
+        specifier: ^2.3.2
+        version: 2.3.2(vue@3.5.35(typescript@5.9.3))
+      axios:
+        specifier: ^1.7.0
+        version: 1.16.1(debug@4.3.4)
+      dompurify:
+        specifier: ^3.4.6
+        version: 3.4.6
+      element-plus:
+        specifier: ^2.7.0
+        version: 2.14.0(vue@3.5.35(typescript@5.9.3))
+      highlight.js:
+        specifier: ^11.11.1
+        version: 11.11.1
+      markdown-it:
+        specifier: ^14.2.0
+        version: 14.2.0
+      markdown-it-multimd-table:
+        specifier: ^4.2.3
+        version: 4.2.3
+      pinia:
+        specifier: ^2.1.0
+        version: 2.3.1(typescript@5.9.3)(vue@3.5.35(typescript@5.9.3))
+      vue:
+        specifier: ^3.4.0
+        version: 3.5.35(typescript@5.9.3)
+      vue-router:
+        specifier: ^4.3.0
+        version: 4.6.4(vue@3.5.35(typescript@5.9.3))
+    devDependencies:
+      '@vitejs/plugin-vue':
+        specifier: ^5.0.0
+        version: 5.2.4(vite@5.4.21(@types/node@24.12.4)(terser@5.48.0))(vue@3.5.35(typescript@5.9.3))
+      vite:
+        specifier: ^5.0.0
+        version: 5.4.21(@types/node@24.12.4)(terser@5.48.0)
+
   travel-nest:
     dependencies:
       '@langchain/community':
@@ -166,46 +206,6 @@ importers:
       typescript-eslint:
         specifier: ^8.20.0
         version: 8.60.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3)
-
-  travel-nest/ui/admin-ui:
-    dependencies:
-      '@element-plus/icons-vue':
-        specifier: ^2.3.2
-        version: 2.3.2(vue@3.5.35(typescript@5.9.3))
-      axios:
-        specifier: ^1.7.0
-        version: 1.16.1(debug@4.3.4)
-      dompurify:
-        specifier: ^3.4.6
-        version: 3.4.6
-      element-plus:
-        specifier: ^2.7.0
-        version: 2.14.0(vue@3.5.35(typescript@5.9.3))
-      highlight.js:
-        specifier: ^11.11.1
-        version: 11.11.1
-      markdown-it:
-        specifier: ^14.2.0
-        version: 14.2.0
-      markdown-it-multimd-table:
-        specifier: ^4.2.3
-        version: 4.2.3
-      pinia:
-        specifier: ^2.1.0
-        version: 2.3.1(typescript@5.9.3)(vue@3.5.35(typescript@5.9.3))
-      vue:
-        specifier: ^3.4.0
-        version: 3.5.35(typescript@5.9.3)
-      vue-router:
-        specifier: ^4.3.0
-        version: 4.6.4(vue@3.5.35(typescript@5.9.3))
-    devDependencies:
-      '@vitejs/plugin-vue':
-        specifier: ^5.0.0
-        version: 5.2.4(vite@5.4.21(@types/node@24.12.4)(terser@5.48.0))(vue@3.5.35(typescript@5.9.3))
-      vite:
-        specifier: ^5.0.0
-        version: 5.4.21(@types/node@24.12.4)(terser@5.48.0)
 
 packages:
 
