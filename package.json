@@ -4,14 +4,14 @@
   "private": true,
   "description": "旅途 · AI 旅行规划助手 Monorepo",
   "scripts": {
-    "dev:backend": "cd apps/travel-nest && pnpm run start:dev",
+    "dev:backend": "cd apps/server && pnpm run start:dev",
     "dev:admin": "cd apps/admin-ui && pnpm run dev",
-    "build:backend": "cd apps/travel-nest && pnpm run build",
+    "build:backend": "cd apps/server && pnpm run build",
     "build:admin": "cd apps/admin-ui && pnpm run build",
-    "db:migrate": "cd apps/travel-nest && pnpm run db:migrate",
-    "db:migrate:dev": "cd apps/travel-nest && pnpm run db:migrate:dev",
-    "db:studio": "cd apps/travel-nest && pnpm run db:studio",
-    "seed:admin": "cd apps/travel-nest && npx tsx scripts/seed-admin.ts"
+    "db:migrate": "cd apps/server && pnpm run db:migrate",
+    "db:migrate:dev": "cd apps/server && pnpm run db:migrate:dev",
+    "db:studio": "cd apps/server && pnpm run db:studio",
+    "seed:admin": "cd apps/server && npx tsx scripts/seed-admin.ts"
   },
   "pnpm": {
     "patchedDependencies": {

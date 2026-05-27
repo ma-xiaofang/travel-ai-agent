@@ -48,7 +48,7 @@ pids
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # Prisma generated client
-apps/travel-nest/generated/prisma/
+apps/server/generated/prisma/
 
 # Old directories pending deletion (locked by Windows)
 /admin-ui/

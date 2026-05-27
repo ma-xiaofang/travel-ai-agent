@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```
 travel-agent/
 ├── apps/
-│   ├── travel-nest/    # NestJS 后端（端口 3000）
+│   ├── server/    # NestJS 后端（端口 3000）
 │   └── admin-ui/       # 管理后台（Vue 3 + Element Plus，端口 5174）
 ├── docs/               # 技术文档
 ├── patches/            # pnpm 依赖补丁
@@ -35,7 +35,7 @@ pnpm run db:studio       # Prisma Studio
 pnpm run seed:admin      # 创建管理员（admin / admin123）
 
 # 也可直接进入子项目执行
-cd apps/travel-nest && pnpm run start:dev
+cd apps/server && pnpm run start:dev
 cd apps/admin-ui && pnpm run dev
 ```
 
@@ -46,7 +46,7 @@ cd apps/admin-ui && pnpm run dev
 ### 后端 (NestJS 11 + LangGraph)
 
 ```
-apps/travel-nest/src/
+apps/server/src/
 ├── agent/          # Agent 核心：StateGraph → tools 循环 + SSE 流式
 ├── admin/          # 管理后台 API：仪表盘、会话观测、知识库、用户管理
 ├── auth/           # JWT 认证 + 角色守卫（ADMIN / USER）
@@ -118,7 +118,7 @@ apps/admin-ui/src/
 ## 注意事项
 
 - **包管理器**：pnpm（务必使用，依赖 workspace + 补丁机制）
-- **monorepo**：根目录 `pnpm install` 安装所有工作区，`pnpm-workspace.yaml` 定义 `travel-nest` 和 `admin-ui`
+- **monorepo**：根目录 `pnpm install` 安装所有工作区，`pnpm-workspace.yaml` 定义 `server` 和 `admin-ui`
 - **admin-ui 端口**：默认 5174，被占用时自动递增。开发时注意 Vite 终端输出
 - **API 响应格式**：后端统一包装 `{ code, message, data }`，admin-ui 的 http.js 拦截器已做 `res.data` 解包，业务代码通过 `res.data` 访问 data 层
 - **环境变量**：dotenvx 注入（.env + .env.local），local 文件已 gitignore
