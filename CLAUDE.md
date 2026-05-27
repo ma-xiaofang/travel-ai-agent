@@ -10,12 +10,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```
 travel-agent/
-├── travel-nest/        # NestJS 后端（端口 3000）
-├── admin-ui/           # 管理后台（Vue 3 + Element Plus，端口 5174）
+├── apps/
+│   ├── travel-nest/    # NestJS 后端（端口 3000）
+│   └── admin-ui/       # 管理后台（Vue 3 + Element Plus，端口 5174）
 ├── docs/               # 技术文档
 ├── patches/            # pnpm 依赖补丁
 ├── package.json        # 根 monorepo 脚本
-├── pnpm-workspace.yaml # 工作区定义
+├── pnpm-workspace.yaml # 工作区定义（apps/*）
 └── pnpm-lock.yaml      # 统一依赖锁文件
 ```
 
@@ -34,8 +35,8 @@ pnpm run db:studio       # Prisma Studio
 pnpm run seed:admin      # 创建管理员（admin / admin123）
 
 # 也可直接进入子项目执行
-cd travel-nest && pnpm run start:dev
-cd admin-ui && pnpm run dev
+cd apps/travel-nest && pnpm run start:dev
+cd apps/admin-ui && pnpm run dev
 ```
 
 启动顺序：先启动后端，再启动管理后台。Vite 端口可能自动递增（5174→5175→...），注意终端输出。
@@ -45,7 +46,7 @@ cd admin-ui && pnpm run dev
 ### 后端 (NestJS 11 + LangGraph)
 
 ```
-travel-nest/src/
+apps/travel-nest/src/
 ├── agent/          # Agent 核心：StateGraph → tools 循环 + SSE 流式
 ├── admin/          # 管理后台 API：仪表盘、会话观测、知识库、用户管理
 ├── auth/           # JWT 认证 + 角色守卫（ADMIN / USER）
@@ -73,7 +74,7 @@ travel-nest/src/
 ### 管理后台 (Vue 3 + Element Plus + Pinia)
 
 ```
-admin-ui/src/
+apps/admin-ui/src/
 ├── layouts/AdminLayout.vue  # 侧栏菜单 + 面包屑
 ├── router/index.js           # hash 路由
 ├── views/

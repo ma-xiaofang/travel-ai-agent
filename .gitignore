@@ -50,6 +50,10 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 # Prisma generated client
 apps/travel-nest/generated/prisma/
 
+# Old directories pending deletion (locked by Windows)
+/admin-ui/
+/travel-nest/
+
 # Admin UI build & screenshots
 apps/admin-ui/dist/
 apps/admin-ui/screenshots/
