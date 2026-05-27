@@ -1,19 +1,19 @@
 # admin-ui 管理后台设计
 
 > 旅途 · AI 旅行规划助手 — B 端运营后台设计文档  
-> 版本：v1.0 · 2026-05-26
+> 版本：v1.1 · 2026-05-27
 
 ---
 
 ## 1. 文档目的
 
-定义 **admin-ui**（管理后台）的产品定位、信息架构、与 `travel-nest` 的 API 契约及分期实施计划，供前后端开发对齐。
+定义 **admin-ui**（管理后台）的产品定位、信息架构、与 `server` 的 API 契约及分期实施计划，供前后端开发对齐。
 
 **相关文档：**
 
-- [Agent核心流程.md](./Agent核心流程.md) — C 端对话与 LangGraph
+- [Agent核心流程.md](./Agent核心流程.md) — Agent 对话与 LangGraph
 - [用户画像与跨会话记忆设计.md](./用户画像与跨会话记忆设计.md) — 跨会话偏好
-- [travel-nest/README.md](../travel-nest/README.md) — 后端模块与 RAG 说明
+- [../apps/server/README.md](../apps/server/README.md) — 后端模块与 RAG 说明（待建）
 
 ---
 
@@ -23,9 +23,10 @@
 
 | 应用 | 目录 | 用户 | 核心目标 |
 |------|------|------|----------|
-| C 端 | `frontend/` | 游客 / 注册用户 | 旅行对话、行程规划 |
-| **B 端** | **`admin-ui/`**（待建） | 运营 / 管理员 | 知识入库、RAG 质检、数据观测、账号管理 |
-| 后端 | `travel-nest/` | — | 统一 API、权限、持久化 |
+| **B 端** | **`apps/admin-ui/`** | 运营 / 管理员 | 知识入库、RAG 质检、数据观测、账号管理、对话测试 |
+| 后端 | `apps/server/` | — | 统一 API、权限、持久化 |
+
+> C 端（普通用户对话）暂未单独建前端项目，目前通过 admin-ui 的「对话测试」页面与 Agent 交互。
 
 ### 2.2 设计原则
 
@@ -37,30 +38,33 @@
 ### 2.3 不在首期范围
 
 - Tool 内 `DAILY_COSTS` 等 mock 的可视化编辑（三期可选）
-- 面向 C 端的营销页、SEO
+- 面向 C 端的独立前端应用（当前通过 admin-ui「对话测试」页面替代）
 - 多租户 / 多知识库租户隔离（后续扩展）
 
 ---
 
 ## 3. 技术选型
 
-与现有 monorepo 对齐，降低维护成本：
+与 monorepo 对齐，降低维护成本：
 
 ```
 travel-agent/
-├── frontend/          # C 端：Vue 3 + Vite + Element Plus + Pinia
-├── admin-ui/          # B 端：同上技术栈（新建）
-└── travel-nest/       # NestJS 11 + Prisma + LangGraph + RAG
+├── apps/
+│   ├── admin-ui/      # B 端：Vue 3 + Vite + Element Plus + Pinia
+│   └── server/        # NestJS 11 + Prisma + LangGraph + RAG
+├── patches/           # pnpm 依赖补丁
+└── docs/              # 技术文档
 ```
 
 | 层级 | 选型 | 说明 |
 |------|------|------|
-| 框架 | Vue 3 + Vite | 与 `frontend/` 一致 |
-| UI | Element Plus | 表格、表单、上传、消息提示 |
-| 状态 | Pinia | 登录态、列表筛选条件 |
-| 路由 | Vue Router | 建议 `history` 模式 |
-| HTTP | axios | `baseURL: /api`，开发代理到 `http://localhost:3000` |
-| 端口 | `5174` | 与 C 端 `5173` 错开 |
+| 框架 | Vue 3 + Vite | Composition API + `<script setup>` |
+| UI | Element Plus | `el-menu`、`el-table`、`el-pagination`、`el-form`、`el-dialog` |
+| 状态 | Pinia | 登录态（auth store） |
+| 路由 | Vue Router | `createWebHashHistory`（hash 模式，兼容静态部署） |
+| HTTP | axios | `baseURL: /api`，Vite 代理到 `http://localhost:3000` |
+| Markdown | markdown-it + hljs + DOMPurify | 对话页渲染 AI 回复 |
+| 端口 | `5174` | Vite 默认，被占用时自动递增 |
 
 可选演进：Monorepo `packages/shared` 共享 TypeScript 类型（MVP 可不做）。
 
@@ -74,13 +78,17 @@ travel-agent/
 flowchart TB
   subgraph admin [admin-ui]
     Login["/login 登录"]
-    Dash["/ 仪表盘"]
-    Coll["/knowledge/collections 集合"]
-    Doc["/knowledge/documents 文档"]
+    Dash["/dashboard 仪表盘"]
+    Coll["/knowledge/collections 集合管理"]
+    Doc["/knowledge/documents 文档管理"]
     Chunk["/knowledge/documents/:id/chunks 分块"]
     Play["/knowledge/playground RAG 调试"]
-    Sess["/sessions 会话观测"]
-    User["/users 用户管理"]
+    SessList["/sessions/list 会话管理"]
+    SessMsg["/sessions/messages 消息管理"]
+    SessChat["/sessions/conversation 对话测试"]
+    UserList["/users/list 用户列表"]
+    UserPref["/users/preferences 用户偏好"]
+    Tools["/tools 工具详情"]
     Sys["/system 系统状态"]
   end
 
@@ -89,8 +97,12 @@ flowchart TB
   Dash --> Doc
   Doc --> Chunk
   Dash --> Play
-  Dash --> Sess
-  Dash --> User
+  Dash --> SessList
+  Dash --> SessMsg
+  Dash --> SessChat
+  Dash --> UserList
+  Dash --> UserPref
+  Dash --> Tools
   Dash --> Sys
 ```
 
@@ -98,21 +110,28 @@ flowchart TB
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│ Logo  旅途管理后台              [管理员昵称] [退出]        │
+│ Logo  途旅AI              面包屑  [admin] [退出]          │
 ├──────────┬──────────────────────────────────────────────┤
-│ 仪表盘    │  面包屑：知识库 / 文档管理                     │
+│ 仪表盘    │  面包屑：会话观测 / 对话测试                   │
 │ 知识库 ▼  │  ┌─────────────────────────────────────────┐ │
-│  集合     │  │ 筛选区 + 操作按钮                         │ │
-│  文档     │  ├─────────────────────────────────────────┤ │
-│  RAG 调试 │  │ 主内容（表格 / 表单 / 调试面板）           │ │
-│ 会话观测  │  └─────────────────────────────────────────┘ │
-│ 用户管理  │                                              │
+│  集合管理 │  │ 主内容（表格 / 表单 / 调试面板 / 对话页）  │ │
+│  文档管理 │  └─────────────────────────────────────────┘ │
+│  RAG 调试 │                                              │
+│ 会话观测 ▼│                                              │
+│  会话管理 │                                              │
+│  消息管理 │                                              │
+│  对话测试 │                                              │
+│ 用户管理 ▼│                                              │
+│  用户列表 │                                              │
+│  用户偏好 │                                              │
+│ 工具详情  │                                              │
 │ 系统状态  │                                              │
 └──────────┴──────────────────────────────────────────────┘
 ```
 
-- 视觉风格与 C 端区分（如深色侧栏），避免运营误用用户端。
+- 深色侧栏（`#304156`）+ 白色顶栏，与 C 端视觉区分。
 - 复用 Element Plus：`el-menu`、`el-table`、`el-pagination`、`el-form`、`el-dialog`。
+- 侧栏菜单 router 模式，`default-active` 根据当前路由自动高亮。
 
 ---
 
@@ -122,25 +141,26 @@ flowchart TB
 
 | 项 | 说明 |
 |----|------|
-| 表单 | 用户名/邮箱 + 密码 |
+| 表单 | 用户名/邮箱/手机号 + 密码 |
 | 接口 | `POST /api/auth/login` |
-| 校验 | 响应中 `role` 必须为 `ADMIN`，否则提示「无管理权限」并拒绝进入 |
-| Token | `accessToken` 存 `localStorage`；axios 请求头 `Authorization: Bearer` |
-| 跳转 | 成功 → `/` 仪表盘 |
+| 校验 | 前端校验 `role === ADMIN`，非管理员提示「无管理权限」并拒绝进入 |
+| Token | `accessToken` 存 `localStorage`；axios 拦截器自动注入 `Authorization: Bearer` |
+| 跳转 | 成功 → `/dashboard` 仪表盘 |
+| 路由守卫 | `router.beforeEach` 检查 `auth.isLoggedIn`，未登录重定向 `/login` |
 
-### 5.2 仪表盘 `/`
+### 5.2 仪表盘 `/dashboard`
 
-**统计卡片（需后端 `GET /api/admin/stats`）：**
+**统计卡片（`GET /api/admin/stats`）：**
 
-- 知识文档总数
-- 已索引 / 处理中 / 失败 数量
-- 今日新入库文档数
-- 会话总数、消息总数（可选）
+- 文档总数 / 已索引 / 处理中 / 入库失败
+- 会话总数、消息总数
+- 今日入库数
 
 **快捷操作：**
 
-- 新建文档
-- 打开 RAG 调试
+- 新建文档 → 跳转 `/knowledge/documents/form`
+- RAG 调试 → 跳转 `/knowledge/playground`
+- 文档管理 → 跳转 `/knowledge/documents`
 
 ### 5.3 知识库 — 集合 `/knowledge/collections`
 
@@ -218,24 +238,59 @@ flowchart TB
 
 用于运营验收：入库后能否被检索、生成答案是否合理。
 
-### 5.7 会话观测 `/sessions`（二期，只读）
+### 5.7 会话观测
+
+二级菜单包含三个子页面：
+
+**会话管理** `/sessions/list`
 
 | 功能 | 接口 |
 |------|------|
-| 会话列表 | `GET /api/admin/sessions`（分页，待建）或复用 agent 列表加守卫 |
-| 消息详情 | `GET /api/agent/history/:sessionId` |
+| 会话分页列表 | `GET /api/admin/sessions`（支持 userId/关键词筛选） |
+| 会话详情（含消息） | `GET /api/admin/sessions/:id` |
 
-用途：客诉排查、Prompt 优化，**不提供**改消息、删用户聊天记录（或仅 SUPER_ADMIN 可选）。
+**消息管理** `/sessions/messages`
 
-### 5.8 用户管理 `/users`（二期）
+| 功能 | 接口 |
+|------|------|
+| 消息分页列表 | `GET /api/admin/messages`（支持 sessionId/role 筛选） |
+
+**对话测试** `/sessions/conversation`
+
+| 功能 | 说明 |
+|------|------|
+| 左侧会话列表 | 仅展示当前 admin 自己的会话，支持搜索 + 新建对话 |
+| 右侧消息区 | SSE 流式对话，消息平铺展示，含可折叠思维链面板 |
+| 输入框 | 底部固定，Enter 发送，支持 shift+Enter 换行 |
+
+用途：admin 自测 Agent 对话效果、Prompt 调试、知识库验收。
+
+### 5.8 用户管理 `/users`
+
+二级菜单包含两个子页面：
+
+**用户列表** `/users/list`
 
 | 列 | 操作 |
 |----|------|
-| 用户名、邮箱、角色、注册时间 | 改角色、禁用（待建 API） |
+| 用户名、邮箱、角色、注册时间 | 改角色（`PATCH /api/admin/users/:id`） |
+
+**用户偏好** `/users/preferences`
+
+| 功能 | 接口 |
+|------|------|
+| 当前用户偏好 | `GET /api/admin/users/preferences` |
 
 依赖 `User.role`（已有 `USER` / `ADMIN`）。
 
-### 5.9 系统状态 `/system`
+### 5.9 工具详情 `/tools`
+
+| 功能 | 说明 |
+|------|------|
+| 工具列表 | `GET /api/agent/tools`，展示全部 10 个 Agent Tool 的名称、描述、参数 schema |
+| 参数说明 | 每个工具的 zod schema 以表格形式展示 |
+
+### 5.10 系统状态 `/system`
 
 | 展示项 | 来源 |
 |--------|------|
@@ -251,7 +306,7 @@ flowchart TB
 ### 6.1 模块结构
 
 ```
-travel-nest/src/admin/
+apps/server/src/admin/
 ├── admin.module.ts
 ├── guards/
 │   ├── roles.guard.ts          # 校验 JWT 内 role
@@ -260,12 +315,21 @@ travel-nest/src/admin/
 │   ├── knowledge.controller.ts
 │   ├── knowledge.service.ts
 │   └── dto/
+├── session/
+│   ├── session.controller.ts
+│   └── session.service.ts
+├── message/
+│   ├── message.controller.ts
+│   └── message.service.ts
+├── users/
+│   ├── users.controller.ts
+│   └── users.service.ts
 └── stats/
     ├── stats.controller.ts
     └── stats.service.ts
 ```
 
-注册于 `AppModule`；所有路由前缀 **`/api/admin`**。
+注册于 `AdminModule`；所有路由前缀 **`/api/admin`**。已实现全部 CRUD API。
 
 ### 6.2 权限模型
 
@@ -328,12 +392,15 @@ export class AdminKnowledgeController { ... }
 | POST | `/api/rag/search` | 向量检索 |
 | POST | `/api/rag/query` | RAG 问答 |
 
-#### 会话 / 用户（二期）
+#### 会话 / 用户 / 消息
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/api/admin/sessions` | 会话分页 |
+| GET | `/api/admin/sessions` | 会话分页（支持 userId/keyword 筛选） |
+| GET | `/api/admin/sessions/:id` | 会话详情（含消息列表） |
+| GET | `/api/admin/messages` | 消息分页（支持 sessionId/role 筛选） |
 | GET | `/api/admin/users` | 用户分页 |
+| GET | `/api/admin/users/preferences` | 当前用户偏好 |
 | PATCH | `/api/admin/users/:id` | 改角色等 |
 
 ### 6.4 分页与响应格式
@@ -391,7 +458,7 @@ sequenceDiagram
 2. 点击「入库」，等待状态变为 `INDEXED`。
 3. 打开「RAG 调试」，检索「郑州 5 天中等预算」。
 4. 确认 `search` 命中片段；`query` 生成合理答案。
-5. 在 C 端 `frontend` 对话中问预算，确认 Tool 输出含「知识库参考资料」。
+5. 打开「对话测试」页，以用户视角提问预算问题，确认 Tool 输出含知识库参考资料。
 
 ### 7.3 删除文档（二期需向量联动）
 
@@ -404,11 +471,10 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-  Admin[admin-ui 运营录入] --> API[travel-nest Admin API]
+  Admin[admin-ui 运营录入 / 对话测试] --> API[server Admin API / Agent API]
   API --> DB[(Prisma 知识表)]
   API --> VS[(PGVector)]
-  User[frontend 用户提问] --> Agent[LangGraph Agent]
-  Agent --> Tools[8 个旅行 Tool]
+  Agent[LangGraph Agent] --> Tools[10 个旅行 Tool]
   Tools --> RAG[fetchKnowledgeContext]
   RAG --> VS
   Tools --> Mock[mock / 外部 API]
@@ -449,35 +515,35 @@ admin 文档表单的「分类」下拉与 `KnowledgeCategory` 对齐：
 
 ## 10. 分期实施
 
-### Phase 1 — MVP（可运营知识库）
+### Phase 1 — MVP ✅ 已完成
 
-| 端 | 交付物 |
-|----|--------|
-| travel-nest | `AdminModule`、`RolesGuard`、知识库 CRUD、`documents/:id/index`、stats |
-| admin-ui | 脚手架、登录、文档列表/表单、入库按钮、RAG 调试页 |
+| 端 | 交付物 | 状态 |
+|----|--------|------|
+| server | `AdminModule`、`RolesGuard`、知识库 CRUD、`documents/:id/index`、stats、会话/消息 API | ✅ |
+| admin-ui | 脚手架、登录、仪表盘、文档列表/表单、入库、RAG 调试、会话观测、对话测试、工具详情、系统状态 | ✅ |
 
 ### Phase 2 — 效率与可维护
 
 | 端 | 交付物 |
 |----|--------|
-| travel-nest | 批量导入、删除向量联动、会话分页 API |
-| admin-ui | 集合管理、分块预览、仪表盘、批量上传 |
+| server | 批量导入、删除向量联动 |
+| admin-ui | 批量上传 |
 
 ### Phase 3 — 运营与配置
 
 | 端 | 交付物 |
 |----|--------|
-| travel-nest | 用户管理 API、可选 DestinationDailyCost 表 |
-| admin-ui | 用户管理、系统状态页、mock 配置（若需要） |
+| server | 可选 DestinationDailyCost 表 |
+| admin-ui | mock 配置（若需要） |
 
 ---
 
 ## 11. 目录与工程约定
 
-### 11.1 admin-ui 目录（建议）
+### 11.1 admin-ui 目录
 
 ```
-admin-ui/
+apps/admin-ui/
 ├── index.html
 ├── vite.config.ts          # port 5174, proxy /api → :3000
 ├── package.json
@@ -485,19 +551,30 @@ admin-ui/
     ├── main.js
     ├── App.vue
     ├── api/
-    │   ├── http.js         # axios 实例 + 拦截器
+    │   ├── http.js         # axios 实例 + 拦截器（自动解包 res.data）
     │   ├── auth.js
     │   ├── knowledge.js
-    │   └── rag.js
+    │   ├── rag.js
+    │   ├── sessions.js
+    │   ├── messages.js
+    │   ├── tools.js
+    │   └── admin-users.js
+    ├── components/
+    │   ├── LogoMark.vue
+    │   └── MarkdownBody.vue # markdown-it + hljs + DOMPurify
     ├── layouts/
-    │   └── AdminLayout.vue
+    │   └── AdminLayout.vue  # 侧栏 + 顶栏 + 面包屑
     ├── router/
-    │   └── index.js
+    │   └── index.js         # hash 路由 + beforeEach 守卫
     ├── stores/
-    │   └── auth.js
+    │   └── auth.js          # Pinia 登录态
+    ├── utils/
+    │   └── renderMarkdown.js
     └── views/
         ├── login/
+        │   └── LoginView.vue
         ├── dashboard/
+        │   └── DashboardView.vue
         ├── knowledge/
         │   ├── CollectionList.vue
         │   ├── DocumentList.vue
@@ -505,8 +582,16 @@ admin-ui/
         │   ├── ChunkList.vue
         │   └── Playground.vue
         ├── sessions/
+        │   ├── SessionManage.vue
+        │   ├── MessageList.vue
+        │   └── ConversationView.vue
         ├── users/
+        │   ├── UserList.vue
+        │   └── UserPreferences.vue
+        ├── tools/
+        │   └── ToolDetail.vue
         └── system/
+            └── SystemStatus.vue
 ```
 
 ### 11.2 环境变量（admin-ui）
@@ -528,11 +613,14 @@ admin-ui/
 
 ## 13. 验收标准（MVP）
 
-- [ ] ADMIN 账号可登录 admin-ui，USER 账号被拒绝
-- [ ] 可创建知识文档并入库，状态变为 `INDEXED`
-- [ ] RAG 调试台能检索到刚入库内容
-- [ ] C 端对话触发相关 Tool 时，回答含知识库附录
-- [ ] 文档列表支持按分类、状态筛选
+- [x] ADMIN 账号可登录 admin-ui，非 ADMIN 账号被拒绝
+- [x] 可创建知识文档并入库，状态变为 `INDEXED`
+- [x] RAG 调试台能检索到刚入库内容
+- [x] 对话测试页可 SSE 流式对话，含思维链面板
+- [x] 文档列表支持按分类、状态筛选
+- [x] 仪表盘展示文档/会话/消息统计数据
+- [x] 会话观测（会话管理 / 消息管理 / 对话测试）可正常使用
+- [x] 工具详情页展示全部 10 个 Agent Tool 元数据
 
 ---
 
@@ -540,4 +628,5 @@ admin-ui/
 
 | 版本 | 日期 | 说明 |
 |------|------|------|
+| v1.1 | 2026-05-27 | 同步实际代码：`travel-nest`→`server`、菜单/路由更新、目录树、验收标准 |
 | v1.0 | 2026-05-26 | 初稿：定位、IA、API、流程、分期 |
