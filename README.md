@@ -17,31 +17,32 @@
 
 ```
 travel-agent/
-├── travel-nest/                  # NestJS 后端
-│   ├── src/
-│   │   ├── agent/                # LangGraph Agent + SSE 流式
-│   │   ├── admin/                # 管理后台 API（仪表盘/会话/知识库/用户）
-│   │   ├── auth/                 # JWT 认证 + 角色守卫
-│   │   ├── llm/                  # DeepSeek 模型工厂
-│   │   ├── memory/               # 对话历史（Prisma 持久化）
-│   │   ├── rag/                  # RAG 向量检索（Chroma + PGVector）
-│   │   ├── session/              # 会话归属校验
-│   │   ├── tavily/               # Tavily 联网搜索
-│   │   ├── tools/                # 10 个 Agent Tool
-│   │   ├── prisma/               # PrismaClient 全局模块
-│   │   └── common/               # 全局拦截器/过滤器
-│   ├── prisma/
-│   │   └── schema.prisma         # 数据模型（User/ChatSession/ChatMessage/知识库）
-│   ├── patches/                  # pnpm 依赖补丁
-│   │   └── @langchain__openai@1.4.7.patch
-│   └── ui/admin-ui/              # 管理后台前端
+├── apps/
+│   ├── server/                    # NestJS 后端
+│   │   ├── src/
+│   │   │   ├── agent/             # LangGraph Agent + SSE 流式
+│   │   │   ├── admin/             # 管理后台 API（仪表盘/会话/知识库/用户）
+│   │   │   ├── auth/              # JWT 认证 + 角色守卫
+│   │   │   ├── llm/               # DeepSeek 模型工厂
+│   │   │   ├── memory/            # 对话历史（Prisma 持久化）
+│   │   │   ├── rag/               # RAG 向量检索（Chroma + PGVector）
+│   │   │   ├── session/           # 会话归属校验
+│   │   │   ├── tavily/            # Tavily 联网搜索
+│   │   │   ├── tools/             # 10 个 Agent Tool
+│   │   │   ├── prisma/            # PrismaClient 全局模块
+│   │   │   └── common/            # 全局拦截器/过滤器
+│   │   └── prisma/
+│   │       └── schema.prisma      # 数据模型（User/ChatSession/ChatMessage/知识库）
+│   └── admin-ui/                  # 管理后台前端（Vue 3 + Element Plus）
 │       └── src/
-│           ├── views/sessions/   # 会话观测（会话管理/消息管理/对话）
-│           ├── views/knowledge/  # 知识库管理
-│           └── layouts/          # 管理布局 + 侧栏菜单
-├── docs/                         # 技术文档
-├── frontend/                     # 旧前端 — 已废弃，勿改
-└── CLAUDE.md                     # Claude Code 指引
+│           ├── views/sessions/    # 会话观测（会话管理/消息管理/对话）
+│           ├── views/knowledge/   # 知识库管理
+│           └── layouts/           # 管理布局 + 侧栏菜单
+├── patches/                       # pnpm 依赖补丁
+├── docs/                          # 技术文档
+├── package.json                   # 根 monorepo 脚本
+├── pnpm-workspace.yaml            # 工作区定义
+└── CLAUDE.md                      # Claude Code 指引
 ```
 
 ## 快速开始
@@ -135,7 +136,7 @@ docker run -d \
 ### 3. 配置环境变量
 
 ```bash
-cd travel-nest
+cd apps/server
 cp .env.example .env
 ```
 
@@ -169,15 +170,17 @@ JWT_REFRESH_EXPIRES_MS=604800000
 ### 4. 安装依赖 & 初始化数据库
 
 ```bash
-cd travel-nest
+# 根目录安装所有工作区
 pnpm install              # 安装依赖 + Prisma 生成 + pnpm 补丁自动应用
-pnpm run db:migrate       # 执行数据库迁移
+
+# 数据库迁移
+pnpm run db:migrate
 ```
 
 ### 5. 创建管理员
 
 ```bash
-npx tsx scripts/seed-admin.ts
+pnpm run seed:admin
 ```
 
 默认账号：`admin` / `admin123`
@@ -186,12 +189,10 @@ npx tsx scripts/seed-admin.ts
 
 ```bash
 # 终端 1：启动后端（端口 3000）
-cd travel-nest
-pnpm run start:dev
+pnpm run dev:backend
 
 # 终端 2：启动管理后台（端口 5174）
-cd travel-nest/ui/admin-ui
-pnpm run dev
+pnpm run dev:admin
 ```
 
 访问：
@@ -269,7 +270,7 @@ DeepSeek V4 模型支持"思考模式"——在回答之前先输出推理过程
 
 ### 其他 LLM 提供商
 
-如需接入其他 OpenAI 兼容模型（如 Qwen、GLM），编辑 `src/llm/create-chat-model.ts` 修改 `baseURL`。
+如需接入其他 OpenAI 兼容模型（如 Qwen、GLM），编辑 `apps/server/src/llm/create-chat-model.ts` 修改 `baseURL`。
 
 ## 技术栈
 
@@ -285,7 +286,7 @@ DeepSeek V4 模型支持"思考模式"——在回答之前先输出推理过程
 | 认证 | JWT（Access + Refresh Token） |
 | 管理前端 | Vue 3 + Element Plus + Pinia |
 | Markdown 渲染 | markdown-it + highlight.js + DOMPurify |
-| 包管理 | pnpm 10 |
+| 包管理 | pnpm 10 (monorepo) |
 
 ## 数据库
 
@@ -307,24 +308,23 @@ DeepSeek V4 模型支持"思考模式"——在回答之前先输出推理过程
 ```bash
 pnpm run db:migrate          # 应用迁移
 pnpm run db:migrate:dev      # 开发：修改 schema 后生成新迁移
-pnpm run db:migrate:status   # 查看迁移状态
 pnpm run db:studio           # Prisma Studio 可视化
-pnpm run db:generate         # 重新生成 Prisma Client
 ```
 
 ## 脚本
 
 ```bash
 # 创建管理员
-npx tsx scripts/seed-admin.ts
+pnpm run seed:admin
 
 # 重新导入知识库示例数据
-pnpm run db:reseed-knowledge
+cd apps/server && pnpm run db:reseed-knowledge
 ```
 
 ## 注意事项
 
-- **包管理器必须是 pnpm**，项目依赖 pnpm 的原生补丁机制修复 `@langchain/openai`
+- **包管理器必须是 pnpm**，项目依赖 pnpm 的原生补丁机制和 workspace
+- **monorepo**：所有命令可在根目录执行（`pnpm run dev:backend` / `pnpm run dev:admin`），也可进入 `apps/` 子目录
 - `.env.local` 存放真实密钥，已加入 `.gitignore`，切勿提交
 - RAG 知识库写入前需先创建集合（`travel-knowledge-base`），详见管理后台"知识库"页面
 - 管理后台端口可能自动递增（若 5174 被占用），注意 Vite 终端输出
