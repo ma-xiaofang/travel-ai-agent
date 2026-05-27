@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 56" fill="none" role="img" aria-label="ÅAI">
+  <defs>
+    <linearGradient id="bg" x1="4" y1="4" x2="52" y2="52" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3B82F6"/>
+      <stop offset="1" stop-color="#22D3EE"/>
+    </linearGradient>
+    <linearGradient id="route" x1="12" y1="38" x2="38" y2="16" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FCD34D"/>
+      <stop offset="1" stop-color="#FB923C"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="8" width="40" height="40" rx="11" fill="url(#bg)"/>
+  <path d="M12 38 C18 30 22 27 30 25 C34 24 37 22 38 19" stroke="url(#route)" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+  <circle cx="12" cy="38" r="2.2" fill="#fff"/>
+  <path d="M35 18c0 3.2-4.5 7.5-4.5 7.5S26 21.2 26 18a4.5 4.5 0 1 1 9 0Z" fill="#fff"/>
+  <circle cx="30.5" cy="18" r="1.6" fill="#2563EB"/>
+  <circle cx="18" cy="30" r="3.8" fill="#C4B5FD" stroke="#fff" stroke-width="1.2"/>
+  <circle cx="18" cy="30" r="1.2" fill="#fff"/>
+  <text x="58" y="36" font-family="Segoe UI, PingFang SC, Microsoft YaHei, sans-serif" font-size="26" font-weight="700" fill="#F8FAFC" letter-spacing="0.5">Å</text>
+  <text x="118" y="36" font-family="Segoe UI, PingFang SC, Microsoft YaHei, sans-serif" font-size="22" font-weight="700" fill="#A78BFA" letter-spacing="1">AI</text>
+</svg>

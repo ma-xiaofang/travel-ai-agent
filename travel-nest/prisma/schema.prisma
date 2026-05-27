@@ -1,0 +1,187 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+  moduleFormat = "cjs"             
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// 用户表 — 存储账户信息与偏好设置
+model User {
+  id        String   @id @default(uuid())
+  email     String?  @unique
+  phone     String?  @unique
+  username  String
+  nickName  String?
+  password  String
+  avatar    String?
+  gender    Gender?
+  age       Int?
+  role          Role           @default(USER)
+  refreshTokens RefreshToken[]
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+/// 性别枚举
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+/// 用户角色枚举
+enum Role {
+  USER
+  ADMIN
+}
+
+/// 刷新令牌表 — 用于 JWT 令牌轮换与撤销
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+/// 用户旅行画像 — 跨会话偏好（userId 可为登录 UUID 或访客 user_xxx，不绑 User 外键）
+model UserTravelProfile {
+  userId      String   @id @map("user_id")
+  summary     String?  @db.Text
+  preferences Json     @default("{}")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("user_travel_profiles")
+}
+
+/// 聊天会话 — 每次「新对话」一条记录
+model ChatSession {
+  id        String        @id @default(uuid())
+  userId    String        @map("user_id")
+  title     String?
+  messages  ChatMessage[]
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([userId, updatedAt(sort: Desc)])
+  @@map("chat_sessions")
+}
+
+/// 聊天消息 — 会话内短期上下文
+model ChatMessage {
+  id        String      @id @default(uuid())
+  sessionId String      @map("session_id")
+  role      MessageRole
+  content   String      @db.Text
+  createdAt DateTime    @default(now()) @map("created_at")
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt])
+  @@map("chat_messages")
+}
+
+/// 消息角色
+enum MessageRole {
+  USER
+  ASSISTANT
+}
+
+// ─── 知识库（RAG）────────────────────────────────────────────
+// 业务元数据存 Prisma 表；向量存 langchain_pg_embedding（与 my-nest-demo 一致）
+// 写入流程：KnowledgeDocument → 分块 → KnowledgeChunk → PGVectorStore.addDocuments
+
+/// 知识库集合 — 对应 PGVector collection（如 travel-knowledge-base）
+model KnowledgeCollection {
+  id          String              @id @default(uuid())
+  name        String              @unique
+  description String?             @db.Text
+  metadata    Json                @default("{}")
+  documents   KnowledgeDocument[]
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @updatedAt @map("updated_at")
+
+  @@map("knowledge_collections")
+}
+
+/// 知识文档 — 入库前的原始资料（对应 RAG loadDocuments 的单条 document）
+model KnowledgeDocument {
+  id           String                @id @default(uuid())
+  collectionId String                @map("collection_id")
+  title        String?
+  content      String                @db.Text
+  source       String?
+  category     KnowledgeCategory     @default(GENERAL)
+  tags         Json                  @default("[]")
+  status       KnowledgeDocStatus    @default(DRAFT)
+  chunkCount   Int                   @default(0) @map("chunk_count")
+  errorMessage String?               @map("error_message") @db.Text
+  createdBy    String?               @map("created_by")
+  chunks       KnowledgeChunk[]
+  collection   KnowledgeCollection   @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  createdAt    DateTime              @default(now()) @map("created_at")
+  updatedAt    DateTime              @updatedAt @map("updated_at")
+
+  @@index([collectionId])
+  @@index([collectionId, status])
+  @@index([category])
+  @@map("knowledge_documents")
+}
+
+/// 知识分块 — 文本切分后的块；embedding 写入向量库后回填 embeddingId
+model KnowledgeChunk {
+  id           String            @id @default(uuid())
+  documentId   String            @map("document_id")
+  chunkIndex   Int               @map("chunk_index")
+  content      String            @db.Text
+  tokenCount   Int?              @map("token_count")
+  /// langchain_pg_embedding.id，用于删除/重建向量时关联
+  embeddingId  String?           @map("embedding_id")
+  metadata     Json              @default("{}")
+  document     KnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  createdAt    DateTime          @default(now()) @map("created_at")
+
+  @@unique([documentId, chunkIndex])
+  @@index([documentId])
+  @@index([embeddingId])
+  @@map("knowledge_chunks")
+}
+
+/// 旅行知识分类 — 按资料内容类型划分（与 Agent 工具无绑定关系）
+/// 细粒度筛选用 tags，如 ["河南", "少林寺", "2025"]
+enum KnowledgeCategory {
+  GENERAL /// 未归类 / 综合
+  ATTRACTION_GUIDE /// 景点攻略：游玩建议、路线、避坑、最佳时段
+  ATTRACTION_FACT /// 景点资料：开放时间、门票、地址、设施等事实信息
+  VISA /// 签证与出入境：材料清单、流程、停留期、免签政策
+  DESTINATION /// 目的地概览：城市/国家介绍、区域划分、最佳旅行季
+  TRANSPORT /// 交通：航班、铁路、市内交通、联票
+  ACCOMMODATION /// 住宿：酒店、民宿、预订须知
+  FOOD /// 美食：餐厅、特色菜、饮食禁忌
+  CUSTOMS /// 海关边防：申报、禁限带物品、入境检查
+  SAFETY /// 安全应急：保险、紧急联系、当地治安提示
+  CULTURE /// 文化礼仪：习俗、禁忌、小费、着装
+  POLICY /// 政策法规：旅行限制、健康申报、当地法规
+}
+
+/// 文档索引状态
+enum KnowledgeDocStatus {
+  DRAFT
+  PROCESSING
+  INDEXED
+  FAILED
+}

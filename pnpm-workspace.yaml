@@ -1,0 +1,3 @@
+packages:
+  - "travel-nest"
+  - "travel-nest/ui/admin-ui"

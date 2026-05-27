@@ -1,0 +1,26 @@
+diff --git a/dist/converters/completions.cjs b/dist/converters/completions.cjs
+index e15ed2aeb3e8b1e058f431cc8f3e7577c40640d9..9a0f90b70aa60dc92df592dafaa45f840525bb19 100644
+--- a/dist/converters/completions.cjs
++++ b/dist/converters/completions.cjs
+@@ -590,6 +590,7 @@ const convertMessagesToCompletionsMessageParams = ({ messages, model }) => {
+ 			if (message.additional_kwargs.tool_calls != null) completionParam.tool_calls = message.additional_kwargs.tool_calls;
+ 			if (_langchain_core_messages.ToolMessage.isInstance(message) && message.tool_call_id != null) completionParam.tool_call_id = message.tool_call_id;
+ 		}
++		if (message.additional_kwargs.reasoning_content) completionParam.reasoning_content = message.additional_kwargs.reasoning_content;
+ 		if (message.additional_kwargs.audio && typeof message.additional_kwargs.audio === "object" && "id" in message.additional_kwargs.audio) return [completionParam, {
+ 			role: "assistant",
+ 			audio: { id: message.additional_kwargs.audio.id }
+diff --git a/dist/converters/completions.js b/dist/converters/completions.js
+index 530c77309dc7359addc0e6e6e0c1269486af3fae..da0651cf078e0006aa08c59a82c29210185c6ae6 100644
+--- a/dist/converters/completions.js
++++ b/dist/converters/completions.js
+@@ -590,7 +590,8 @@ const convertMessagesToCompletionsMessageParams = ({ messages, model }) => {
+ 			if (message.additional_kwargs.tool_calls != null) completionParam.tool_calls = message.additional_kwargs.tool_calls;
+ 			if (ToolMessage.isInstance(message) && message.tool_call_id != null) completionParam.tool_call_id = message.tool_call_id;
+ 		}
+-		if (message.additional_kwargs.audio && typeof message.additional_kwargs.audio === "object" && "id" in message.additional_kwargs.audio) return [completionParam, {
++		if (message.additional_kwargs.reasoning_content) completionParam.reasoning_content = message.additional_kwargs.reasoning_content;
++			if (message.additional_kwargs.audio && typeof message.additional_kwargs.audio === "object" && "id" in message.additional_kwargs.audio) return [completionParam, {
+ 			role: "assistant",
+ 			audio: { id: message.additional_kwargs.audio.id }
+ 		}];
