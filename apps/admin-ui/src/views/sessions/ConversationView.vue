@@ -514,12 +514,16 @@ onMounted(() => {
   background: #fff;
   border-bottom: 1px solid #ebeef5;
   flex-shrink: 0;
+  display: flex;
+  justify-content: center;
 }
 
 .chat-header-info {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  width: 100%;
+  max-width: 800px;
 }
 
 .chat-header-info strong {
@@ -537,12 +541,16 @@ onMounted(() => {
   flex: 1;
   overflow-y: auto;
   padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .chat-empty-inner {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
   height: 100%;
   color: #a8abb2;
   font-size: 13px;
@@ -552,6 +560,7 @@ onMounted(() => {
 .msg-bubble-row {
   margin-bottom: 24px;
   max-width: 800px;
+  width: 100%;
 }
 
 .msg-body {
@@ -681,6 +690,8 @@ onMounted(() => {
   background: #fff;
   border-top: 1px solid #ebeef5;
   flex-shrink: 0;
+  display: flex;
+  justify-content: center;
 }
 
 .input-wrapper {
@@ -692,6 +703,8 @@ onMounted(() => {
   padding: 8px 10px;
   border: 1px solid #e4e7ed;
   transition: border-color 0.2s;
+  width: 100%;
+  max-width: 800px;
 }
 
 .input-wrapper:focus-within {

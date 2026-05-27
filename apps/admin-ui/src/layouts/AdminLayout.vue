@@ -37,7 +37,7 @@
           </template>
           <el-menu-item index="/sessions/list">会话管理</el-menu-item>
           <el-menu-item index="/sessions/messages">消息管理</el-menu-item>
-          <el-menu-item index="/sessions/conversation">对话</el-menu-item>
+          <el-menu-item index="/sessions/conversation">对话测试</el-menu-item>
         </el-sub-menu>
 
         <el-sub-menu index="users">
@@ -120,7 +120,7 @@ const breadcrumbs = computed(() => {
     'knowledge/playground': '知识库 / RAG 调试',
     'sessions/list': '会话观测 / 会话管理',
     'sessions/messages': '会话观测 / 消息管理',
-    'sessions/conversation': '会话观测 / 对话',
+    'sessions/conversation': '会话观测 / 对话测试',
     'users/list': '用户管理 / 用户列表',
     'users/preferences': '用户管理 / 用户偏好',
     tools: '工具详情',
