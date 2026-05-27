@@ -2,9 +2,9 @@
 node_modules/
 
 # Compiled output
-/dist
-/build
-/generated
+**/dist/
+**/build/
+**/generated/
 
 # Logs
 logs
@@ -48,9 +48,9 @@ pids
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # Prisma generated client
-travel-nest/generated/prisma/
+apps/travel-nest/generated/prisma/
 
 # Admin UI build & screenshots
-admin-ui/dist/
-admin-ui/screenshots/
-admin-ui/*.png
+apps/admin-ui/dist/
+apps/admin-ui/screenshots/
+apps/admin-ui/*.png

@@ -4,20 +4,41 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-旅途 · AI 旅行规划助手 — 基于 NestJS 11 + LangGraph + Vue 3 构建的 AI 旅行规划应用。10 个工具协同工作（天气、景点、行程、预算、签证、货币、打包清单、翻译、联网搜索、会话标题）。
+旅途 · AI 旅行规划助手 — 基于 NestJS 11 + LangGraph + Vue 3 的 pnpm monorepo。10 个工具协同工作（天气、景点、行程、预算、签证、货币、打包清单、翻译、联网搜索、会话标题）。
+
+## 项目结构
+
+```
+travel-agent/
+├── travel-nest/        # NestJS 后端（端口 3000）
+├── admin-ui/           # 管理后台（Vue 3 + Element Plus，端口 5174）
+├── docs/               # 技术文档
+├── patches/            # pnpm 依赖补丁
+├── package.json        # 根 monorepo 脚本
+├── pnpm-workspace.yaml # 工作区定义
+└── pnpm-lock.yaml      # 统一依赖锁文件
+```
 
 ## 常用命令
 
 ```bash
-# 后端（travel-nest/）
-cd travel-nest && pnpm run start:dev    # 开发启动（nest start --watch，端口3000）
+# 从根目录执行
+pnpm run dev:backend     # 启动后端（nest start --watch，端口 3000）
+pnpm run dev:admin       # 启动管理后台（Vite，端口 5174）
+pnpm run build:admin     # 构建管理后台
 
-# 管理后台（travel-nest/ui/admin-ui/）
-cd travel-nest/ui/admin-ui && pnpm run dev   # Vite 开发（端口5174）
-cd travel-nest/ui/admin-ui && pnpm run build # 生产构建
+# 数据库
+pnpm run db:migrate      # 应用迁移
+pnpm run db:migrate:dev  # 开发：生成新迁移
+pnpm run db:studio       # Prisma Studio
+pnpm run seed:admin      # 创建管理员（admin / admin123）
 
-# 旧前端（frontend/）— 已废弃，不要修改
+# 也可直接进入子项目执行
+cd travel-nest && pnpm run start:dev
+cd admin-ui && pnpm run dev
 ```
+
+启动顺序：先启动后端，再启动管理后台。Vite 端口可能自动递增（5174→5175→...），注意终端输出。
 
 ## 架构概要
 
@@ -52,7 +73,7 @@ travel-nest/src/
 ### 管理后台 (Vue 3 + Element Plus + Pinia)
 
 ```
-travel-nest/ui/admin-ui/src/
+admin-ui/src/
 ├── layouts/AdminLayout.vue  # 侧栏菜单 + 面包屑
 ├── router/index.js           # hash 路由
 ├── views/
@@ -79,15 +100,11 @@ travel-nest/ui/admin-ui/src/
 - 左侧：admin 自己的会话列表（按 userId 过滤）+ 搜索 + 新建对话按钮
 - 右侧：消息平铺展示（无气泡），含可折叠思维链面板 + 底部输入框
 - 流式对话：SSE 实时接收 text / reasoning / session 事件
-- 安全：不允许操作其他用户的会话，admin 只能在自己的会话中对话
-
-### 旧前端（frontend/）— 已废弃
-
-保留仅供参考，**不要修改**。
+- 安全：不操作其他用户的会话，admin 只能在自己的会话中对话
 
 ## @langchain/openai 补丁
 
-**补丁文件**：`travel-nest/patches/@langchain__openai@1.4.7.patch`
+**补丁文件**：`patches/@langchain__openai@1.4.7.patch`
 
 **问题**：`@langchain/openai` v1.4.7 在将消息序列化为 API 格式时，`convertMessagesToCompletionsMessageParams` 函数未透传 `additional_kwargs.reasoning_content`，导致 DeepSeek 工具调用链的第二轮请求返回 400。
 
@@ -99,9 +116,10 @@ travel-nest/ui/admin-ui/src/
 
 ## 注意事项
 
-- **包管理器**：pnpm（务必使用，有 lock 文件和补丁机制）
-- **前端端口**：admin-ui 默认 5174，但若端口被占用会自动递增。开发时注意 Vite 输出中实际使用的端口
+- **包管理器**：pnpm（务必使用，依赖 workspace + 补丁机制）
+- **monorepo**：根目录 `pnpm install` 安装所有工作区，`pnpm-workspace.yaml` 定义 `travel-nest` 和 `admin-ui`
+- **admin-ui 端口**：默认 5174，被占用时自动递增。开发时注意 Vite 终端输出
 - **API 响应格式**：后端统一包装 `{ code, message, data }`，admin-ui 的 http.js 拦截器已做 `res.data` 解包，业务代码通过 `res.data` 访问 data 层
-- **插件系统**：dotenvx 注入环境变量（.env + .env.local），应用通过 `@nestjs/config` 读取
-- **启动顺序**：先启动后端（3000），再启动 admin-ui（5174+）
+- **环境变量**：dotenvx 注入（.env + .env.local），local 文件已 gitignore
+- **启动顺序**：先启动后端（3000），再启动 admin-ui
 - **会话归属**：`SessionService.ensureSession` 校验 session 归属，不绕过此检查。admin 对话功能通过 `listSessions({ userId })` 过滤自己的会话

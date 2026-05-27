@@ -1,3 +1,2 @@
 packages:
-  - "travel-nest"
-  - "admin-ui"
+  - "apps/*"
