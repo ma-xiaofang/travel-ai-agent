@@ -2,6 +2,8 @@
 
 基于 **NestJS 11 + LangGraph + Vue 3** 的智能旅行规划平台。10 个 AI 工具协同工作，覆盖天气查询、景点推荐、行程生成、预算估算、签证政策、货币换算、打包清单、实时翻译、联网搜索等旅行全流程。
 
+**预览地址**：http://117.72.219.224:5174/
+
 ## 特性
 
 - **LangGraph Agent**：多工具协同调用链（天气 → 景点 → 行程 → 预算），自动串联
@@ -276,7 +278,7 @@ pnpm run dev:admin
 | `POST` | `/tools/translate` | 短语翻译 |
 | `POST` | `/tools/web-search` | 联网搜索 |
 
-## 3. 一次流式对话的完整流程
+## 一次流式对话的完整流程
 
 入口：`POST /api/agent/chat/stream`  
 Body：`{ userId, sessionId?, message }`
