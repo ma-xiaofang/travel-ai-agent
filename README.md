@@ -276,6 +276,63 @@ pnpm run dev:admin
 | `POST` | `/tools/translate` | 短语翻译 |
 | `POST` | `/tools/web-search` | 联网搜索 |
 
+## 3. 一次流式对话的完整流程
+
+入口：`POST /api/agent/chat/stream`  
+Body：`{ userId, sessionId?, message }`
+
+```mermaid
+sequenceDiagram
+  participant FE as 前端
+  participant API as AgentController
+  participant Agent as AgentService
+  participant Session as SessionService
+  participant Memory as MemoryService
+  participant Graph as LangGraph
+  participant LLM as DeepSeek
+  participant Tool as Tools
+  participant DB as PostgreSQL
+
+  FE->>API: POST chat/stream
+  API->>Agent: streamChat(userId, message, sessionId?)
+  Agent->>Session: ensureSession(sessionId, userId)
+  Session->>DB: 查找或创建 chat_sessions
+  Agent->>Memory: getHistory(session.id)
+  Memory->>DB: 最近 20 条 chat_messages
+  Agent->>Agent: buildGraph(session.id)
+  Agent->>Graph: stream({ messages })
+
+  loop ReAct 循环
+    Graph->>LLM: invoke（含 SystemPrompt + 历史）
+    alt 有 tool_calls
+      Graph->>Tool: ToolNode 执行
+      Tool->>DB: update_session_title 等写库
+      Tool-->>Graph: Tool 结果消息
+    else 无 tool_calls
+      Graph-->>Agent: 流式文本 chunk
+      Agent-->>API: yield { type: text, content }
+      API-->>FE: SSE data
+    end
+  end
+
+  Agent->>Memory: addMessage USER + ASSISTANT
+  Memory->>DB: INSERT chat_messages
+  Agent-->>API: yield { type: session, sessionId }
+  API-->>FE: SSE done
+```
+
+### 步骤说明
+
+| 步骤 | 代码位置 | 说明 |
+|------|----------|------|
+| 1. 确保会话 | `sessionService.ensureSession()` | 有 `sessionId` 则复用，否则新建 `chat_sessions` |
+| 2. 编译 Graph | `buildGraph(session.id)` | 绑定 9 个 Tool（含会话标题） |
+| 3. 加载历史 | `memoryService.getHistory()` | DB → `HumanMessage` / `AIMessage` |
+| 4. 拼消息 | `[...history, new HumanMessage(message)]` | 送入 Graph 初始状态 |
+| 5. 流式执行 | `graph.stream({ streamMode: 'messages' })` | 只 yield `agent` 节点的文本 chunk |
+| 6. 持久化 | `memoryService.addMessage()` | 流结束后写入 USER / ASSISTANT |
+| 7. 回传 sessionId | `yield { type: 'session', sessionId }` | 前端可存 localStorage |
+
 ## LLM 配置
 
 ### 模型选择
