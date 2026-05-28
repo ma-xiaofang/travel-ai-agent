@@ -13,6 +13,32 @@
 - **管理后台**：仪表盘、会话观测、知识库运营、用户管理
 - **PostgreSQL + PGVector**：业务数据 + 向量存储一体化
 
+## 界面截图
+
+- 登录页（路由：`/#/login`）
+
+![登录页](screenshots/login.png)
+
+- 知识库文档管理（路由：`/#/knowledge/documents`）
+
+![知识库文档管理](screenshots/knowledge_documents.png)
+
+- RAG 调试（路由：`/#/knowledge/playground`）
+
+![RAG 调试](screenshots/knowledge_playground.png)
+
+- 会话对话测试（路由：`/#/sessions/conversation`）
+
+![会话对话测试](screenshots/sessions_conversation.png)
+
+- 工具详情（上半区，路由：`/#/tools`）
+
+![工具详情上半区](screenshots/toolinfo_1.png)
+
+- 工具详情（下半区，路由：`/#/tools`）
+
+![工具详情下半区](screenshots/toolinfo_2.png)
+
 ## 项目结构
 
 ```
