@@ -55,19 +55,23 @@ export class AgentController {
         sessionId,
       )) {
         if (chunk.type === 'text') {
+          // 发送文本消息
           res.write(
             `data: ${JSON.stringify({ type: 'text', content: chunk.content })}\n\n`,
           );
         } else if (chunk.type === 'reasoning') {
+          // 发送思维链消息
           res.write(
             `data: ${JSON.stringify({ type: 'reasoning', content: chunk.content })}\n\n`,
           );
         } else if (chunk.type === 'session') {
+          // 发送会话事件
           res.write(
             `data: ${JSON.stringify({ type: 'session', sessionId: chunk.sessionId })}\n\n`,
           );
         }
       }
+      // 发送完成事件
       res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
     } catch (error: any) {
       res.write(
