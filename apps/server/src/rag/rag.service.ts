@@ -12,10 +12,22 @@ import { VECTOR_STORE_SERVICE } from './vector-store.interface.js';
 import type { VectorStoreService } from './vector-store.interface.js';
 import type { LoadDocumentsDto } from './dto/index.js';
 
+/**
+ * RAG 知识库服务
+ *
+ * 负责知识库的写入与检索两条主链路：
+ * - **写入**：文档分块 → 向量化写入向量库（PGVector）→ 同步元数据到 Prisma 知识表
+ * - **检索**：向量相似度检索（可选基于资料调用大模型生成回答）
+ *
+ * 采用「向量库存向量、Prisma 存正文与元数据」的双写设计：
+ * 正文以 Prisma 分块表为准，规避向量库 document 列的编码异常问题。
+ */
 @Injectable()
 export class RagService {
+  // 问答用 LLM，低温度（0.3）以保证回答稳定、贴合资料
   private readonly llm = createChatModel(0.3);
 
+  // 文本分块器：500 字一块、重叠 50 字，分隔符兼顾中英文标点
   private readonly splitter = new RecursiveCharacterTextSplitter({
     chunkSize: 500,
     chunkOverlap: 50,
@@ -30,14 +42,21 @@ export class RagService {
   ) {}
 
   /**
-   * 加载文档：分块 → 写入 PGVector → 同步 Prisma 知识表。
+   * 批量加载文档入库：分块 → 写入向量库（PGVector）→ 同步 Prisma 知识表。
+   *
+   * 单篇文档失败不影响其余文档（逐篇 try/catch，失败标记 FAILED 并记录错误）。
+   *
+   * @param dto 待加载文档及目标集合、创建人等信息
+   * @returns 入库结果汇总（成功篇数、总块数、每篇明细）
    */
   async loadDocuments(dto: LoadDocumentsDto) {
+    // 集合名优先级：入参 → 环境变量 → 默认值
     const collectionName =
       dto.collectionName ??
       this.configService.get<string>('RAG_COLLECTION_NAME') ??
       'travel-knowledge-base';
 
+    // upsert 集合：不存在则创建，已存在则复用
     const collection = await this.prisma.knowledgeCollection.upsert({
       where: { name: collectionName },
       create: { name: collectionName },
@@ -56,6 +75,7 @@ export class RagService {
     for (const doc of dto.documents) {
       const documentId = doc.id ?? randomUUID();
 
+      // 先落库文档记录并置为 PROCESSING，便于失败时回写状态
       await this.prisma.knowledgeDocument.upsert({
         where: { id: documentId },
         create: {
@@ -82,6 +102,7 @@ export class RagService {
       });
 
       try {
+        // 将正文切分为带元数据的文本块
         const splitDocs = await this.splitter.createDocuments(
           [doc.content],
           [
@@ -94,6 +115,7 @@ export class RagService {
           ],
         );
 
+        // langchainDocs：写入向量库；chunkRows：写入 Prisma 分块表
         const langchainDocs: Document[] = [];
         const chunkRows: {
           id: string;
@@ -103,6 +125,7 @@ export class RagService {
           metadata: Record<string, unknown>;
         }[] = [];
 
+        // 为每个块生成统一 chunkId，作为向量库与分块表之间的关联键
         splitDocs.forEach((chunk, index) => {
           const chunkId = randomUUID();
           chunkRows.push({
@@ -131,6 +154,7 @@ export class RagService {
           );
         });
 
+        // 写入向量库，返回各块对应的向量记录 ID（顺序与入参一致）
         const embeddingIds =
           await this.vectorStoreService.addDocuments(langchainDocs);
 
@@ -156,6 +180,7 @@ export class RagService {
           });
         }
 
+        // 入库成功，更新文档状态为 INDEXED 并记录块数
         await this.prisma.knowledgeDocument.update({
           where: { id: documentId },
           data: {
@@ -172,6 +197,7 @@ export class RagService {
           chunkCount: chunkRows.length,
         });
       } catch (error: unknown) {
+        // 单篇失败：标记 FAILED 并记录错误信息，不中断其余文档
         const message =
           error instanceof Error ? error.message : '文档入库失败';
         await this.prisma.knowledgeDocument.update({
@@ -195,12 +221,25 @@ export class RagService {
     };
   }
 
-  /** 删除指定文档在向量库中的全部块 */
+  /**
+   * 删除指定文档在向量库中的全部块。
+   *
+   * @param docId 文档 ID
+   */
   async deleteDocumentVectors(docId: string): Promise<void> {
     await this.vectorStoreService.deleteByDocId(docId);
   }
 
-  /** 优先从 Prisma 分块表取正文，避免向量库 document 列编码异常 */
+  /**
+   * 解析块的正文内容：优先从 Prisma 分块表读取。
+   *
+   * 向量库的 document 列可能存在编码异常，故以 Prisma 存储的正文为准；
+   * 当缺少 chunkId 或分块表查不到时，回退使用向量库返回的 pageContent。
+   *
+   * @param pageContent 向量库返回的原始正文（回退值）
+   * @param chunkId 块 ID，用于在 Prisma 分块表中精确定位
+   * @returns 最终采用的正文内容
+   */
   private async resolveChunkContent(
     pageContent: string,
     chunkId?: string,
@@ -213,7 +252,15 @@ export class RagService {
     return chunk?.content ?? pageContent;
   }
 
-  /** 纯向量检索，不调用大模型 */
+  /**
+   * 纯向量相似度检索，不调用大模型。
+   *
+   * 用于知识库调试或为其他工具提供原始检索片段。
+   *
+   * @param query 查询语句
+   * @param topK 返回片段数量，默认 4
+   * @returns 命中片段的正文与元数据列表
+   */
   async searchVectorStore(query: string, topK = 4) {
     const docs = await this.vectorStoreService.similaritySearch(query, topK);
     return Promise.all(
@@ -227,13 +274,25 @@ export class RagService {
     );
   }
 
-  /** RAG 问答：检索 + 基于资料生成回答 */
+  /**
+   * RAG 问答：检索相关片段 + 严格基于资料由大模型生成回答。
+   *
+   * 流程：相似度检索（带距离分）→ 按阈值过滤 → 拼接上下文 →
+   * 套用「仅依据资料作答」的提示词调用 LLM → 返回答案与来源。
+   * 过滤后无命中时直接返回提示语，不调用大模型。
+   *
+   * @param question 用户问题
+   * @param topK 检索片段数量，默认 3
+   * @returns 问题、答案与来源片段（含相似度）
+   */
   async query(question: string, topK = 3) {
+    // 带距离分的相似度检索（距离越小越相关）
     const retrieved = await this.vectorStoreService.similaritySearchWithScore(
       question,
       topK,
     );
 
+    // 最大可接受距离阈值：超过则视为不相关，过滤掉
     const maxDistance =
       parseFloat(
         this.configService.get<string>('RAG_MAX_DISTANCE') ?? '0.65',
@@ -241,6 +300,7 @@ export class RagService {
 
     const filtered = retrieved.filter(([, score]) => score <= maxDistance);
 
+    // 无相关片段：直接返回提示，避免大模型凭空作答
     if (!filtered.length) {
       return {
         question,
@@ -249,6 +309,7 @@ export class RagService {
       };
     }
 
+    // 将命中片段编号拼接为上下文，注入提示词
     const context = filtered
       .map(([doc], i) => `[${i + 1}] ${doc.pageContent}`)
       .join('\n\n');
@@ -267,9 +328,11 @@ export class RagService {
       ['human', '{question}'],
     ]);
 
+    // 组装 LCEL 链：提示词 → LLM → 纯字符串输出
     const chain = prompt.pipe(this.llm).pipe(new StringOutputParser());
     const answer = await chain.invoke({ context, question });
 
+    // 整理来源信息，将距离分转换为更直观的相似度（1 - 距离）
     const sources = await Promise.all(
       filtered.map(async ([doc, score]) => ({
         content: await this.resolveChunkContent(
