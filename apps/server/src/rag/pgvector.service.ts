@@ -62,7 +62,6 @@ export class PgvectorService implements VectorStoreService {
       collectionName: this.collectionName,
       collectionTableName: PgvectorService.COLLECTION_TABLE,
       tableName: PgvectorService.EMBEDDING_TABLE,
-      skipInitializationCheck: true,
       columns: {
         idColumnName: 'id',
         vectorColumnName: 'embedding',
@@ -70,7 +69,18 @@ export class PgvectorService implements VectorStoreService {
         metadataColumnName: 'cmetadata',
       },
       distanceStrategy: 'cosine' as DistanceStrategy,
+      dimensions: this.resolveEmbeddingDimensions(embeddingModel),
     };
+  }
+
+  /** 智谱 embedding 模型对应的向量维度 */
+  private resolveEmbeddingDimensions(model: string): number {
+    const fromEnv = this.configService.get<string>('RAG_EMBEDDING_DIMENSIONS');
+    if (fromEnv) {
+      const parsed = parseInt(fromEnv, 10);
+      if (!Number.isNaN(parsed) && parsed > 0) return parsed;
+    }
+    return model === 'embedding-2' ? 1024 : 2048;
   }
 
   /**
@@ -147,6 +157,7 @@ export class PgvectorService implements VectorStoreService {
    * @param docId 文档 ID
    */
   async deleteByDocId(docId: string): Promise<void> {
+    if (!(await this.embeddingTableExists())) return;
     const vectorStore = await this.getVectorStore();
     await vectorStore.delete({ filter: { docId } });
   }
@@ -218,8 +229,20 @@ export class PgvectorService implements VectorStoreService {
     const collectionTable = PgvectorService.COLLECTION_TABLE;
     const embeddingTable = PgvectorService.EMBEDDING_TABLE;
     const foreignKeyName = `${embeddingTable}_collection_id_fkey`;
+    const dimensions = this.resolveEmbeddingDimensions(
+      this.configService.get<string>('RAG_EMBEDDING_MODEL') ?? 'embedding-3',
+    );
 
+    await this.pool.query('CREATE EXTENSION IF NOT EXISTS vector;');
     await this.pool.query('CREATE EXTENSION IF NOT EXISTS pgcrypto;');
+    await this.pool.query(`
+      CREATE TABLE IF NOT EXISTS ${embeddingTable} (
+        id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+        document text,
+        cmetadata jsonb,
+        embedding vector(${dimensions})
+      );
+    `);
     await this.pool.query(`
       CREATE TABLE IF NOT EXISTS ${collectionTable} (
         uuid uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -258,6 +281,14 @@ export class PgvectorService implements VectorStoreService {
       `,
       [this.collectionName],
     );
+  }
+
+  /** 向量 embedding 表是否已存在 */
+  private async embeddingTableExists(): Promise<boolean> {
+    const result = await this.pool.query(
+      `SELECT to_regclass('public.${PgvectorService.EMBEDDING_TABLE}') AS regclass`,
+    );
+    return result.rows[0]?.regclass != null;
   }
 
   /** 类型守卫：判断是否为带 message（及可选 code）的 PG 错误对象 */
