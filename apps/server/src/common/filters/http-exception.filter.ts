@@ -4,6 +4,7 @@ import {
   ExceptionFilter,
   HttpException,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { ResponseDto } from '../dto/response.dto';
@@ -11,6 +12,8 @@ import { ResponseDto } from '../dto/response.dto';
 /** 全局 HTTP 异常过滤器 — 将异常也输出为统一响应格式 */
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(HttpExceptionFilter.name);
+
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
@@ -29,6 +32,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
       if (Array.isArray(message)) {
         message = message[0];
       }
+    } else if (exception instanceof Error && exception.message) {
+      message = exception.message;
+      this.logger.error(exception.message, exception.stack);
+    } else {
+      this.logger.error('Unhandled exception', exception);
     }
 
     const body: ResponseDto = {

@@ -13,6 +13,9 @@ import { CollectionDto, DocumentDto, DocumentQueryDto } from './dto/index.js';
 /** 知识库管理服务 — 集合/文档/分块 CRUD */
 @Injectable()
 export class KnowledgeService {
+  /** 处理中超过此时间视为异常中断，允许重新入库 */
+  private static readonly STALE_PROCESSING_MS = 10 * 60 * 1000;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly ragService: RagService,
@@ -132,18 +135,21 @@ export class KnowledgeService {
     const doc = await this.prisma.knowledgeDocument.findUnique({ where: { id } });
     if (!doc) throw new NotFoundException('文档不存在');
     if (doc.status === 'PROCESSING') {
-      throw new BadRequestException('文档正在处理中');
+      const staleMs = Date.now() - doc.updatedAt.getTime();
+      if (staleMs < KnowledgeService.STALE_PROCESSING_MS) {
+        throw new BadRequestException('文档正在处理中');
+      }
     }
 
-    await this.prisma.knowledgeDocument.update({
-      where: { id },
-      data: { status: 'PROCESSING', errorMessage: null },
-    });
-
-    await this.ragService.deleteDocumentVectors(id);
-    await this.prisma.knowledgeChunk.deleteMany({ where: { documentId: id } });
-
     try {
+      await this.prisma.knowledgeDocument.update({
+        where: { id },
+        data: { status: 'PROCESSING', errorMessage: null },
+      });
+
+      await this.ragService.deleteDocumentVectors(id);
+      await this.prisma.knowledgeChunk.deleteMany({ where: { documentId: id } });
+
       const result = await this.ragService.loadDocuments({
         documents: [{
           id: doc.id,
@@ -156,13 +162,26 @@ export class KnowledgeService {
         collectionName: undefined,
       });
 
-      return { status: 'INDEXED', chunkCount: result.totalChunks, result };
+      const docResult = result.results.find((r) => r.documentId === id);
+      if (!docResult || docResult.status !== 'INDEXED') {
+        throw new Error(docResult?.error ?? '入库失败');
+      }
+
+      return {
+        status: 'INDEXED',
+        chunkCount: docResult.chunkCount ?? result.totalChunks,
+        result,
+      };
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : '入库失败';
-      await this.prisma.knowledgeDocument.update({
-        where: { id },
-        data: { status: 'FAILED', errorMessage: message },
-      });
+      try {
+        await this.prisma.knowledgeDocument.update({
+          where: { id },
+          data: { status: 'FAILED', errorMessage: message },
+        });
+      } catch {
+        // 忽略二次写入失败，优先把原始错误返回给前端
+      }
       throw new BadRequestException(message);
     }
   }
