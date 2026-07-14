@@ -1,7 +1,9 @@
+import { resolve } from 'path';
 import dotenv from 'dotenv';
 
-dotenv.config({ path: '.env' });
-dotenv.config({ path: '.env.local', override: true });
+// 使用绝对路径加载 .env，避免 PM2 cwd 不同导致找不到配置文件
+dotenv.config({ path: resolve(__dirname, '../.env') });
+dotenv.config({ path: resolve(__dirname, '../.env.local'), override: true });
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
+import { resolve } from 'path';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard.js';
@@ -14,7 +15,8 @@ import { AdminModule } from './admin/admin.module.js';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env', '.env.local'],
+      // 使用绝对路径，避免 PM2 cwd 不同导致找不到 .env
+      envFilePath: [resolve(__dirname, '../.env'), resolve(__dirname, '../.env.local')],
     }),
     PrismaModule,
     MemoryModule,
@@ -32,4 +34,4 @@ import { AdminModule } from './admin/admin.module.js';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }
