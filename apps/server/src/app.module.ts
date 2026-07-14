@@ -16,7 +16,7 @@ import { AdminModule } from './admin/admin.module.js';
     ConfigModule.forRoot({
       isGlobal: true,
       // 使用绝对路径，避免 PM2 cwd 不同导致找不到 .env
-      envFilePath: [resolve(__dirname, '../.env'), resolve(__dirname, '../.env.local')],
+      envFilePath: [resolve(__dirname, '../../.env'), resolve(__dirname, '../../.env.local')],
     }),
     PrismaModule,
     MemoryModule,
