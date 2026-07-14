@@ -61,6 +61,8 @@ travel-agent/
 │   │   │   └── common/            # 全局拦截器/过滤器
 │   │   └── prisma/
 │   │       └── schema.prisma      # 数据模型（User/ChatSession/ChatMessage/知识库）
+│   ├── ecosystem.config.js  # PM2 进程配置
+│   └── .env.example         # 环境变量示例
 │   └── admin-ui/                  # 管理后台前端（Vue 3 + Element Plus）
 │       └── src/
 │           ├── views/sessions/    # 会话观测（会话管理/消息管理/对话）
@@ -227,6 +229,10 @@ pnpm run dev:admin
 - 管理后台：`http://localhost:5174`
 - Swagger 文档：`http://localhost:3000/api`（开发环境）
 - 健康检查：`http://localhost:3000/api/agent/health`
+
+### 7. 生产环境启动
+
+详见下方 [生产部署（PM2）](#生产部署pm2) 章节。
 
 ## API 概览
 
@@ -396,14 +402,60 @@ pnpm run db:migrate:dev      # 开发：修改 schema 后生成新迁移
 pnpm run db:studio           # Prisma Studio 可视化
 ```
 
+## 生产部署（PM2）
+
+### 1. 构建
+
+```bash
+pnpm run build:backend
+```
+
+### 2. 启动 / 管理
+
+```bash
+cd apps/server
+
+pnpm pm2:start      # 首次启动（使用 ecosystem.config.js）
+pnpm pm2:deploy     # 日常部署：构建 + 重启
+pnpm pm2:restart    # 重启服务
+pnpm pm2:stop       # 停止服务
+pnpm pm2:logs       # 查看实时日志
+```
+
+PM2 配置文件：`apps/server/ecosystem.config.js`
+
+### 3. 开机自启
+
+```bash
+pm2 startup         # 生成开机启动脚本
+pm2 save            # 保存当前进程列表
+```
+
 ## 脚本
 
 ```bash
-# 创建管理员
-pnpm run seed:admin
+# 开发
+pnpm run dev:backend          # 启动后端（watch 模式）
+pnpm run dev:admin            # 启动管理后台
+pnpm run build:backend        # 构建后端
+pnpm run build:admin          # 构建管理后台
 
-# 重新导入知识库示例数据
-cd apps/server && pnpm run db:reseed-knowledge
+# 数据库
+pnpm run db:migrate           # 应用数据库迁移
+pnpm run db:migrate:dev       # 开发模式生成迁移
+pnpm run db:studio            # Prisma Studio 可视化
+
+# 数据初始化
+pnpm run seed:admin           # 创建管理员（admin / admin123）
+cd apps/server && pnpm run db:reseed-knowledge  # 重新导入知识库示例数据
+
+# PM2 生产部署
+cd apps/server
+pnpm pm2:start                # 首次启动
+pnpm pm2:deploy               # 构建 + 重启
+pnpm pm2:restart              # 重启
+pnpm pm2:stop                 # 停止
+pnpm pm2:logs                 # 查看日志
 ```
 
 ## 注意事项
