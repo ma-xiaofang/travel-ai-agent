@@ -124,8 +124,6 @@ docker run -d \
 | 镜像标签 | PostgreSQL 版本 |
 |----------|----------------|
 | `pgvector/pgvector:pg17` | PostgreSQL 17（推荐） |
-| `pgvector/pgvector:pg16` | PostgreSQL 16 |
-| `pgvector/pgvector:pg15` | PostgreSQL 15 |
 
 **验证 pgvector 扩展**：
 

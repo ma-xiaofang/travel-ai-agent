@@ -58,3 +58,6 @@ apps/server/generated/prisma/
 apps/admin-ui/dist/
 apps/admin-ui/screenshots/
 apps/admin-ui/*.png
+
+# 服务器
+_ssh.py

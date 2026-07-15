@@ -1,0 +1,21 @@
+{
+  "plugins": {
+    "@release-it/conventional-changelog": {
+      "emoji": true,
+      "emojiPosition": "before",
+      "infile": "CHANGELOG.md",
+      "ignoreRecommendedBump": true,
+      "strictSemVer": true
+    }
+  },
+  "npm": {
+    "publish": false
+  },
+  "git": {
+    "commitMessage": "🐳 chore: release v${version}"
+  },
+  "github": {
+    "release": false,
+    "draft": false
+  }
+}

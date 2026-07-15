@@ -1,0 +1,98 @@
+{
+  // 默认格式化工具选择prettier
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "files.encoding": "utf8",
+  "cSpell.words": [
+    "Attributify",
+    "autofocus",
+    "autoscan",
+    "commitlint",
+    "conventionalcommits",
+    "easycom",
+    "echart",
+    "Fbase",
+    "Fdemo",
+    "FILESYSTEMS",
+    "Fpages",
+    "Froute",
+    "infile",
+    "Logined",
+    "miniprogram",
+    "mjsx",
+    "mtsx",
+    "nvue",
+    "plusplus",
+    "Prefixs",
+    "splashscreen",
+    "tseslint",
+    "unplugin",
+    "VITE"
+  ],
+  "GitCommitPlugin.ShowEmoji": true, // 提交是否显示 emoji 符号
+  "GitCommitPlugin.MaxSubjectCharacters": 20, // 提交 Subject 最大字符数
+  // 增加自定义类型，可以配置多个
+  "GitCommitPlugin.CustomCommitType": [ // 自定义提交类型
+    // {
+    //   "key": "wip", 
+    //   "label": "wip",
+    //   "detail": "正在开发中",
+    //   "icon":"🔓️ ",
+    // },
+    // {
+    //   "key": "workflow", 
+    //   "label": "workflow",
+    //   "detail": "工作流程改进",
+    //   "icon":"⏳️ ",
+    // },
+    // {
+    //   "key": "types", 
+    //   "label": "types",
+    //   "detail": "类型定义文件修改",
+    //   "icon":"🚙 ",
+    // },
+  ],
+  "GitCommitPlugin.Templates": [ // 自定义提交模板
+    // {
+    //   "templateName": "git-uni-lin",
+    //   "templateContent": "<icon><scope><type>(<scope>):<subject>",
+    //   "default":true // 是否覆盖默认模板
+    // }
+  ],
+  // 配置stylelint检查的文件类型范围
+  "stylelint.validate": ["css", "scss", "vue", "html"], // 与package.json的scripts对应
+  "stylelint.enable": true, // 开启stylelint
+  "css.validate": false, // 关闭 vsocode 的 css校验
+  "less.validate": false, // 关闭 vsocode 的 less校验
+  "scss.validate": false, // 关闭 vsocode 的 scss校验
+  "[shellscript]": {
+    "editor.defaultFormatter": "foxundermoon.shell-format"
+  },
+  "[dotenv]": {
+    "editor.defaultFormatter": "foxundermoon.shell-format"
+  },
+  "[vue]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  // 配置语言的文件关联
+  "files.associations": {
+    "pages.json": "jsonc", // pages.json 可以写注释
+    "manifest.json": "jsonc" // manifest.json 可以写注释
+  },
+  "explorer.fileNesting.enabled": true, // 开启文件嵌套
+  "explorer.fileNesting.expand": false, // 默认折叠
+  "explorer.fileNesting.patterns": {
+    "*.ts": "$(capture).test.ts, $(capture).test.tsx",
+    "*.tsx": "$(capture).test.ts, $(capture).test.tsx",
+    // "*.env": "$(capture).env.*",
+    "README.md": "*.md",
+    "package.json": "pnpm-lock.yaml,pnpm-workspace.yaml,LICENSE,.gitattributes,.gitignore,.gitpod.yml,CNAME,.npmrc,.browserslistrc",
+    "eslint.config.mjs": ".eslintignore,.prettierignore,.stylelintignore,commitlint.*,prettier.*,stylelint.*,.eslintrc-auto-import.*,.release*",
+    ".env": ".env.*",
+  }
+}

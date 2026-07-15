@@ -1,0 +1,19 @@
+# Logs
+logs
+*.log
+
+# Editor directories and files
+.vscode
+.idea
+**/*.svg
+
+# projects
+.husky
+node_modules
+src/uni_modules/
+src/static/
+dist/
+
+# uniapp 插件生成的文件
+src/pages.json
+src/manifest.json

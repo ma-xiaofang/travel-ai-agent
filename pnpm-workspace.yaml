@@ -1,2 +1,12 @@
 packages:
   - "apps/*"
+allowBuilds:
+  '@nestjs/core': true
+  '@parcel/watcher': true
+  '@prisma/engines': true
+  bcrypt: true
+  core-js: true
+  esbuild: true
+  prisma: true
+  unrs-resolver: true
+  vue-demi: true

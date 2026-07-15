@@ -1,0 +1,77 @@
+/**
+ * 途旅 AI — 全局 SCSS 变量
+ */
+
+/* ======== 品牌色 ======== */
+$uni-color-primary: #FF6B3D;
+$uni-color-primary-light: #FF8F5E;
+$uni-color-primary-dark: #E55A2F;
+$uni-color-primary-pale: #FFF5F0;
+
+$uni-color-success: #52C41A;
+$uni-color-warning: #FAAD14;
+$uni-color-error: #FF4D4F;
+
+/* ======== 文字颜色 ======== */
+$uni-text-color: #1A1A1A;
+$uni-text-color-secondary: #666666;
+$uni-text-color-grey: #999999;
+$uni-text-color-placeholder: #BBBBBB;
+$uni-text-color-disable: #D0D0D0;
+$uni-text-color-inverse: #FFFFFF;
+
+/* ======== 背景颜色 ======== */
+$uni-bg-color: #FFFFFF;
+$uni-bg-color-grey: #F5F6FA;
+$uni-bg-color-hover: #F5F5F5;
+$uni-bg-color-mask: rgba(0, 0, 0, 0.45);
+
+/* ======== 边框颜色 ======== */
+$uni-border-color: #E8E8E8;
+$uni-border-color-light: #F0F0F0;
+
+/* ======== 圆角 ======== */
+$uni-border-radius-sm: 6rpx;
+$uni-border-radius-base: 12rpx;
+$uni-border-radius-lg: 20rpx;
+$uni-border-radius-xl: 28rpx;
+$uni-border-radius-circle: 50%;
+
+/* ======== 阴影 ======== */
+$uni-shadow-sm: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+$uni-shadow-base: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+$uni-shadow-lg: 0 8rpx 32rpx rgba(0, 0, 0, 0.08);
+
+/* ======== 字体大小 ======== */
+$uni-font-size-xs: 20rpx;
+$uni-font-size-sm: 24rpx;
+$uni-font-size-base: 28rpx;
+$uni-font-size-md: 30rpx;
+$uni-font-size-lg: 32rpx;
+$uni-font-size-xl: 36rpx;
+$uni-font-size-xxl: 44rpx;
+
+/* ======== 间距 ======== */
+$uni-spacing-xs: 8rpx;
+$uni-spacing-sm: 16rpx;
+$uni-spacing-base: 24rpx;
+$uni-spacing-md: 32rpx;
+$uni-spacing-lg: 40rpx;
+$uni-spacing-xl: 48rpx;
+
+/* ======== 图片尺寸 ======== */
+$uni-img-size-sm: 40rpx;
+$uni-img-size-base: 56rpx;
+$uni-img-size-lg: 80rpx;
+$uni-img-size-xl: 120rpx;
+
+/* ======== 透明度 ======== */
+$uni-opacity-disabled: 0.4;
+
+/* ======== 文章场景 ======== */
+$uni-color-title: #1A1A1A;
+$uni-font-size-title: 36rpx;
+$uni-color-subtitle: #555555;
+$uni-font-size-subtitle: 30rpx;
+$uni-color-paragraph: #3F536E;
+$uni-font-size-paragraph: 28rpx;
