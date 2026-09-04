@@ -8,7 +8,8 @@
     "scheme": "travelaiagent",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.maxiaofang.travelaiagent"
     },
     "android": {
       "adaptiveIcon": {
@@ -18,7 +19,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.user_2026.travelaiagent"
+      "package": "com.maxiaofang.travelaiagent"
     },
     "web": {
       "output": "static",
