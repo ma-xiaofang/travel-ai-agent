@@ -57,7 +57,7 @@
 import { ref, reactive } from 'vue'
 import { searchRag, queryRag } from '@/api/rag'
 
-const form = reactive({ question: '', topK: 3 })
+const form = reactive({ question: '', topK: 5 })
 const activeTab = ref('search')
 const searching = ref(false)
 const querying = ref(false)

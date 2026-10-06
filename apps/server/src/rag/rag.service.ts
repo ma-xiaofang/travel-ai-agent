@@ -161,8 +161,14 @@ export class RagService {
         if (chunkRows.length > 0) {
           // 按索引位置关联：embeddingIds[i] 对应 langchainDocs[i].metadata.chunkId
           const chunkIdToEmbeddingId = new Map<string, string>();
-          for (let i = 0; i < langchainDocs.length && i < embeddingIds.length; i++) {
-            const cId = langchainDocs[i].metadata?.chunkId as string | undefined;
+          for (
+            let i = 0;
+            i < langchainDocs.length && i < embeddingIds.length;
+            i++
+          ) {
+            const cId = langchainDocs[i].metadata?.chunkId as
+              | string
+              | undefined;
             if (cId && embeddingIds[i]) {
               chunkIdToEmbeddingId.set(cId, embeddingIds[i]);
             }
@@ -198,8 +204,7 @@ export class RagService {
         });
       } catch (error: unknown) {
         // 单篇失败：标记 FAILED 并记录错误信息，不中断其余文档
-        const message =
-          error instanceof Error ? error.message : '文档入库失败';
+        const message = error instanceof Error ? error.message : '文档入库失败';
         await this.prisma.knowledgeDocument.update({
           where: { id: documentId },
           data: { status: 'FAILED', errorMessage: message },
@@ -282,10 +287,10 @@ export class RagService {
    * 过滤后无命中时直接返回提示语，不调用大模型。
    *
    * @param question 用户问题
-   * @param topK 检索片段数量，默认 3
+   * @param topK 检索片段数量，默认 5
    * @returns 问题、答案与来源片段（含相似度）
    */
-  async query(question: string, topK = 3) {
+  async query(question: string, topK = 5) {
     // 带距离分的相似度检索（距离越小越相关）
     const retrieved = await this.vectorStoreService.similaritySearchWithScore(
       question,

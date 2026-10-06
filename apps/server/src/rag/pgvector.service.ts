@@ -46,8 +46,10 @@ export class PgvectorService implements VectorStoreService {
 
     this.pool = new Pool({
       connectionString: this.configService.get('DATABASE_URL'),
-      // 显式 UTF-8，避免 Windows 环境下中文乱码
-      options: '-c client_encoding=UTF8',
+      // 显式 UTF-8 避免中文乱码；
+      // lc_messages=C 让 PG 返回英文错误消息——LangChain PGVectorStore 仅以
+      // 英文串 "already exists" 容忍建表迁移中的已存在列，中文 locale 下会误抛异常。
+      options: '-c client_encoding=UTF8 -c lc_messages=C',
     });
     const embeddingModel =
       this.configService.get<string>('RAG_EMBEDDING_MODEL') ?? 'embedding-3';

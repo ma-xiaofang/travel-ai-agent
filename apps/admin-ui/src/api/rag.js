@@ -6,6 +6,6 @@ export function searchRag(question, topK = 4) {
 }
 
 /** RAG 问答 */
-export function queryRag(question, topK = 3) {
+export function queryRag(question, topK = 5) {
   return http.post('/rag/query', { question, topK })
 }

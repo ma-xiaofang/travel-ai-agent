@@ -74,7 +74,7 @@ pnpm run start:dev
 | `RAG_COLLECTION_NAME` | | 向量集合名，默认 `travel-knowledge-base` |
 | `RAG_EMBEDDING_MODEL` | | 向量模型：`embedding-2` / `embedding-3`（智谱）或 `BAAI/bge-m3`（硅基流动），默认 `embedding-3`；模型名含 `bge` 时自动走硅基流动 |
 | `RAG_EMBEDDING_DIMENSIONS` | | 向量维度，留空按模型默认（embedding-2=1024、embedding-3=2048、bge-m3=1024） |
-| `RAG_MAX_DISTANCE` | | RAG 问答相似度阈值，默认 `0.5` |
+| `RAG_MAX_DISTANCE` | | RAG 问答距离阈值（余弦距离，越小越相关），代码默认 `0.65`；bge-m3 距离分布压缩，建议 `0.52` |
 | `CHAT_TEMPERATURE` | | 对话温度，默认 `0.7` |
 | `MAX_ITERATIONS` | | Agent 最大迭代轮数，默认 `6` |
 | `PORT` | | 服务端口，默认 `3000` |
