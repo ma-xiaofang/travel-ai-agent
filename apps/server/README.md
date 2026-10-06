@@ -66,17 +66,22 @@ pnpm run start:dev
 | `DATABASE_URL` | ✅ | PostgreSQL 连接串 |
 | `DEEPSEEK_API_KEY` | ✅ | DeepSeek API Key（对话 + 部分 Tool LLM） |
 | `DEEPSEEK_MODEL` | | 默认 `deepseek-v4-flash` |
-| `ZHIPU_API_KEY` | ✅* | 智谱 API Key（RAG Embedding） |
+| `ZHIPU_API_KEY` | ✅* | 智谱 API Key（RAG 向量化，`embedding-2` / `embedding-3`） |
+| `SILICON_FLOW_API_KEY` | ✅* | 硅基流动 API Key（RAG 向量化，BGE-M3） |
+| `SILICON_FLOW_BASE_URL` | | 硅基流动接口地址，默认 `https://api.siliconflow.cn/v1` |
 | `JWT_ACCESS_SECRET` | ✅ | JWT 签名密钥 |
 | `OPEN_WEATHER_API_KEY` | | OpenWeatherMap；未配置时天气 Tool 使用 mock |
 | `RAG_COLLECTION_NAME` | | 向量集合名，默认 `travel-knowledge-base` |
-| `RAG_EMBEDDING_MODEL` | | 智谱 Embedding 模型，默认 `embedding-3` |
+| `RAG_EMBEDDING_MODEL` | | 向量模型：`embedding-2` / `embedding-3`（智谱）或 `BAAI/bge-m3`（硅基流动），默认 `embedding-3`；模型名含 `bge` 时自动走硅基流动 |
+| `RAG_EMBEDDING_DIMENSIONS` | | 向量维度，留空按模型默认（embedding-2=1024、embedding-3=2048、bge-m3=1024） |
 | `RAG_MAX_DISTANCE` | | RAG 问答相似度阈值，默认 `0.5` |
 | `CHAT_TEMPERATURE` | | 对话温度，默认 `0.7` |
 | `MAX_ITERATIONS` | | Agent 最大迭代轮数，默认 `6` |
 | `PORT` | | 服务端口，默认 `3000` |
 
-\* 未配置 `ZHIPU_API_KEY` 时，RAG 检索失败但不影响 Tool 的 mock/API 逻辑。
+\* 智谱与硅基流动二选一：按 `RAG_EMBEDDING_MODEL` 选择对应厂商的 Key。未配置时 RAG 检索失败，但不影响 Tool 的 mock/API 逻辑。
+
+> 切换向量模型会改变向量维度，而 `langchain_pg_embedding.embedding` 列维度固定，需先清空向量表并重新入库。
 
 示例：
 
@@ -84,7 +89,15 @@ pnpm run start:dev
 DATABASE_URL="postgresql://postgres:123456@localhost:5432/travel-agent?schema=public"
 DEEPSEEK_API_KEY=sk-your-deepseek-key
 DEEPSEEK_MODEL=deepseek-v4-flash
+
+# RAG 向量化：智谱（默认）
 ZHIPU_API_KEY=your-zhipu-key
+RAG_EMBEDDING_MODEL=embedding-3
+
+# RAG 向量化：硅基流动 BGE-M3（可选，替换上一行）
+# SILICON_FLOW_API_KEY=your-silicon-key
+# RAG_EMBEDDING_MODEL=BAAI/bge-m3
+
 OPEN_WEATHER_API_KEY=your-open-weather-key
 JWT_ACCESS_SECRET=your-access-secret-change-in-production
 ```

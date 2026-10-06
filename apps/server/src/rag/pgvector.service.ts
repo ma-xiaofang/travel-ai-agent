@@ -5,7 +5,9 @@ import {
   PGVectorStore,
 } from '@langchain/community/vectorstores/pgvector';
 import { ZhipuAIEmbeddings } from '@langchain/community/embeddings/zhipuai';
+import { OpenAIEmbeddings } from '@langchain/openai';
 import { Document } from '@langchain/core/documents';
+import { Embeddings } from '@langchain/core/embeddings';
 import { Pool } from 'pg';
 import { VectorStoreService } from './vector-store.interface.js';
 
@@ -13,8 +15,8 @@ import { VectorStoreService } from './vector-store.interface.js';
  * PGVector 向量库服务
  *
  * 基于 PostgreSQL 的 pgvector 扩展，封装 {@link VectorStoreService} 接口：
- * 组合 ZhipuAI Embedding 模型、pg 连接池与 LangChain `PGVectorStore`，
- * 提供文档向量化写入、相似度检索与按文档删除等能力。
+ * 组合向量模型（智谱 ZhipuAI 或硅基流动 BGE-M3）、pg 连接池与
+ * LangChain `PGVectorStore`，提供文档向量化写入、相似度检索与按文档删除等能力。
  *
  * 向量库实例采用懒加载 + 单飞（single-flight）初始化，并在初始化时
  * 自愈式补齐集合表结构（建表、唯一索引、外键、默认集合）。
@@ -27,7 +29,7 @@ export class PgvectorService implements VectorStoreService {
   /** 数据库连接池 */
   private readonly pool: Pool;
   /** 向量模型 */
-  private readonly embeddings: ZhipuAIEmbeddings;
+  private readonly embeddings: Embeddings;
   /** 知识库名称 */
   private readonly collectionName: string;
   /** 向量库实例 */
@@ -50,12 +52,8 @@ export class PgvectorService implements VectorStoreService {
     const embeddingModel =
       this.configService.get<string>('RAG_EMBEDDING_MODEL') ?? 'embedding-3';
 
-    // 向量模型：根据环境变量选择 embedding-2 或 embedding-3
-    this.embeddings = new ZhipuAIEmbeddings({
-      apiKey: this.configService.get('ZHIPU_API_KEY'),
-      modelName:
-        embeddingModel === 'embedding-2' ? 'embedding-2' : 'embedding-3',
-    });
+    // 向量模型：BGE-M3（硅基流动）或 embedding-2 / embedding-3（智谱）
+    this.embeddings = this.createEmbeddings(embeddingModel);
     // 向量库配置：指定表名、列名、距离策略等
     this.pgVectorConfig = {
       pool: this.pool,
@@ -73,13 +71,43 @@ export class PgvectorService implements VectorStoreService {
     };
   }
 
-  /** 智谱 embedding 模型对应的向量维度 */
+  /**
+   * 创建向量模型实例。
+   *
+   * - 模型名含 `bge`（如 `BAAI/bge-m3`）：走硅基流动 OpenAI 兼容接口
+   * - 其余（embedding-2 / embedding-3）：走智谱 ZhipuAI
+   */
+  private createEmbeddings(model: string): Embeddings {
+    if (this.isBgeM3(model)) {
+      return new OpenAIEmbeddings({
+        apiKey: this.configService.get<string>('SILICON_FLOW_API_KEY') ?? '',
+        model,
+        configuration: {
+          baseURL:
+            this.configService.get<string>('SILICON_FLOW_BASE_URL') ??
+            'https://api.siliconflow.cn/v1',
+        },
+      });
+    }
+    return new ZhipuAIEmbeddings({
+      apiKey: this.configService.get('ZHIPU_API_KEY'),
+      modelName: model === 'embedding-2' ? 'embedding-2' : 'embedding-3',
+    });
+  }
+
+  /** 是否为 BGE-M3 系向量模型（硅基流动） */
+  private isBgeM3(model: string): boolean {
+    return model.toLowerCase().includes('bge');
+  }
+
+  /** 向量模型对应的向量维度 */
   private resolveEmbeddingDimensions(model: string): number {
     const fromEnv = this.configService.get<string>('RAG_EMBEDDING_DIMENSIONS');
     if (fromEnv) {
       const parsed = parseInt(fromEnv, 10);
       if (!Number.isNaN(parsed) && parsed > 0) return parsed;
     }
+    if (this.isBgeM3(model)) return 1024;
     return model === 'embedding-2' ? 1024 : 2048;
   }
 
