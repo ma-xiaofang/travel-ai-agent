@@ -20,4 +20,9 @@ export class UpdateUserDto {
   @IsOptional()
   @IsEnum(Role)
   role?: Role;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  avatar?: string;
 }

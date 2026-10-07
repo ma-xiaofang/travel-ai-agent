@@ -76,8 +76,21 @@
           </el-breadcrumb>
         </div>
         <div class="topbar-right">
-          <span class="user-info">{{ auth.user?.username ?? '管理员' }}</span>
-          <el-button text @click="handleLogout">退出</el-button>
+          <el-dropdown trigger="click" @command="handleUserCommand">
+            <span class="user-entry">
+              <el-avatar :size="32" :src="auth.avatar || undefined">
+                <el-icon><UserFilled /></el-icon>
+              </el-avatar>
+              <span class="user-info">{{ auth.displayName }}</span>
+              <el-icon class="arrow"><ArrowDown /></el-icon>
+            </span>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="avatar">修改头像</el-dropdown-item>
+                <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
       </el-header>
 
@@ -85,19 +98,41 @@
         <router-view />
       </el-main>
     </el-container>
+
+    <!-- 修改头像弹窗 -->
+    <el-dialog v-model="avatarVisible" title="修改头像" width="380px">
+      <AvatarUploader v-model="draftAvatar" />
+      <template #footer>
+        <el-button @click="avatarVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="savingAvatar"
+          :disabled="!draftAvatar || draftAvatar === auth.avatar"
+          @click="saveAvatar"
+        >
+          保存
+        </el-button>
+      </template>
+    </el-dialog>
   </el-container>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { DataAnalysis, Document, ChatDotRound, User, Setting, Briefcase } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import { DataAnalysis, Document, ChatDotRound, User, Setting, Briefcase, UserFilled, ArrowDown } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import LogoMark from '@/components/LogoMark.vue'
+import AvatarUploader from '@/components/AvatarUploader.vue'
 
 const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
+
+const avatarVisible = ref(false)
+const draftAvatar = ref('')
+const savingAvatar = ref(false)
 
 /** 当前激活菜单 */
 const activeMenu = computed(() => {
@@ -153,6 +188,35 @@ function handleLogout() {
   auth.logout()
   router.push('/login')
 }
+
+/** 顶栏用户下拉菜单命令 */
+function handleUserCommand(command) {
+  if (command === 'avatar') {
+    draftAvatar.value = auth.avatar
+    avatarVisible.value = true
+  } else if (command === 'logout') {
+    handleLogout()
+  }
+}
+
+/** 保存当前管理员头像 */
+async function saveAvatar() {
+  savingAvatar.value = true
+  try {
+    await auth.updateAvatar(draftAvatar.value)
+    ElMessage.success('头像已更新')
+    avatarVisible.value = false
+  } catch {
+    // 错误提示由 HTTP 拦截器统一处理
+  } finally {
+    savingAvatar.value = false
+  }
+}
+
+onMounted(() => {
+  // 拉取最新资料，回填头像/昵称
+  auth.fetchProfile().catch(() => {})
+})
 </script>
 
 <style scoped>
@@ -219,6 +283,19 @@ function handleLogout() {
 .user-info {
   color: #606266;
   font-size: 14px;
+}
+
+.user-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  outline: none;
+}
+
+.user-entry .arrow {
+  color: #909399;
+  font-size: 12px;
 }
 
 .el-main {

@@ -9,7 +9,8 @@ import { ToolsModule } from './tools/tools.module';
 import { MemoryModule } from './memory/memory.module.js';
 import { AgentModule } from './agent/agent.module.js';
 import { RagModule } from './rag/rag.module.js';
-import { AdminModule } from './admin/admin.module.js';
+import { AdminModule } from './admin/admin.module';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { AdminModule } from './admin/admin.module.js';
     AgentModule,
     RagModule,
     AdminModule,
+    UploadModule,
   ],
   controllers: [],
   providers: [

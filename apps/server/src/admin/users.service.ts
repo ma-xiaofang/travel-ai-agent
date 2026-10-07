@@ -61,7 +61,7 @@ export class AdminUsersService {
     };
   }
 
-  /** 管理员编辑用户（昵称、性别、年龄、角色） */
+  /** 管理员编辑用户（昵称、性别、年龄、角色、头像） */
   async updateUser(userId: string, dto: UpdateUserDto) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
@@ -75,6 +75,7 @@ export class AdminUsersService {
         ...(dto.gender !== undefined ? { gender: dto.gender } : {}),
         ...(dto.age !== undefined ? { age: dto.age } : {}),
         ...(dto.role !== undefined ? { role: dto.role } : {}),
+        ...(dto.avatar !== undefined ? { avatar: dto.avatar } : {}),
       },
       select: {
         id: true,

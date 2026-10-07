@@ -22,6 +22,13 @@
 
     <!-- 表格 -->
     <el-table :data="users" v-loading="loading" stripe>
+      <el-table-column label="头像" width="70" align="center">
+        <template #default="{ row }">
+          <el-avatar :size="36" :src="row.avatar || undefined">
+            {{ (row.nickName || row.username || '?').charAt(0).toUpperCase() }}
+          </el-avatar>
+        </template>
+      </el-table-column>
       <el-table-column prop="username" label="用户名" min-width="120" />
       <el-table-column prop="email" label="邮箱" min-width="180">
         <template #default="{ row }">{{ row.email ?? '-' }}</template>
@@ -76,6 +83,9 @@
         <el-form-item label="用户名">
           <span>{{ editForm.username }}</span>
         </el-form-item>
+        <el-form-item label="头像">
+          <AvatarUploader v-model="editForm.avatar" :size="72" />
+        </el-form-item>
         <el-form-item label="昵称" prop="nickName">
           <el-input v-model="editForm.nickName" maxlength="50" />
         </el-form-item>
@@ -108,6 +118,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { listUsers, updateUser } from '@/api/admin-users'
+import AvatarUploader from '@/components/AvatarUploader.vue'
 
 const users = ref([])
 const loading = ref(false)
@@ -130,6 +141,7 @@ const editForm = reactive({
   gender: '',
   age: null,
   role: 'USER',
+  avatar: '',
 })
 
 function fmt(iso) {
@@ -181,6 +193,7 @@ function openEdit(row) {
   editForm.gender = row.gender ?? ''
   editForm.age = row.age
   editForm.role = row.role
+  editForm.avatar = row.avatar ?? ''
   editVisible.value = true
 }
 
@@ -192,6 +205,7 @@ async function handleSave() {
       gender: editForm.gender || undefined,
       age: editForm.age != null ? editForm.age : undefined,
       role: editForm.role,
+      avatar: editForm.avatar || undefined,
     })
     ElMessage.success('保存成功')
     editVisible.value = false

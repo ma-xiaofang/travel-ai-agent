@@ -74,7 +74,7 @@
           confirm-type="send" :disabled="streaming" @confirm="handleSend" />
         <button v-if="!streaming" class="send-btn" :class="{ disabled: !inputText.trim() }" hover-class="none"
           @click="handleSend">
-          <image class="send-icon" src="/static/send.png" mode="aspectFit" />
+          <image class="send-icon" src="/static/send.svg" mode="aspectFit" />
         </button>
         <button v-else class="stop-btn" @click="abort">停止</button>
       </view>

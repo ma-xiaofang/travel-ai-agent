@@ -5,10 +5,20 @@ import dotenv from 'dotenv';
 dotenv.config({ path: resolve(__dirname, '../../.env') });
 dotenv.config({ path: resolve(__dirname, '../../.env.local'), override: true });
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
+import {
+  UPLOAD_URL_PREFIX,
+  ensureUploadDirs,
+  getUploadRoot,
+} from './upload/upload.paths.js';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // 确保上传目录存在，并以静态资源方式暴露 /uploads/*
+  ensureUploadDirs();
+  app.useStaticAssets(getUploadRoot(), { prefix: `${UPLOAD_URL_PREFIX}/` });
 
   // 全局 DTO 校验管道
   const { ValidationPipe } = await import('@nestjs/common');

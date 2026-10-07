@@ -116,6 +116,46 @@ export class AuthService {
       .catch(() => {}); // 令牌不存在时静默处理
   }
 
+  /** 获取当前登录用户资料 */
+  async getProfile(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        phone: true,
+        nickName: true,
+        avatar: true,
+        role: true,
+      },
+    });
+    if (!user) {
+      throw new UnauthorizedException('用户不存在');
+    }
+    return user;
+  }
+
+  /** 更新当前登录用户头像 */
+  async updateAvatar(userId: string, avatar: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new UnauthorizedException('用户不存在');
+    }
+
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { avatar },
+      select: {
+        id: true,
+        username: true,
+        nickName: true,
+        avatar: true,
+        role: true,
+      },
+    });
+  }
+
   /** 生成 Access + Refresh Token 对 */
   private async generateTokens(user: {
     id: string;
