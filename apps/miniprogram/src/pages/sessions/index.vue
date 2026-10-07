@@ -12,7 +12,7 @@
       <image
         class="empty-img"
         src="/static/hero/sessions-empty.png"
-        mode="aspectFit"
+        mode="widthFix"
       />
       <text class="empty-text">暂无历史会话</text>
       <text class="empty-sub">去「对话」页开始你的旅行规划吧</text>
@@ -148,8 +148,7 @@ function formatTime(dateStr: string) {
 }
 
 .empty-img {
-  width: 340rpx;
-  height: 340rpx;
+  width: 380rpx;
   margin-bottom: 16rpx;
 }
 

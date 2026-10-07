@@ -1,7 +1,7 @@
 <template>
   <view class="login-page">
     <!-- Hero 背景图 -->
-    <image class="hero-bg" src="/static/hero/login-bg.png" mode="aspectFill" />
+    <image class="hero-bg" src="/static/hero/login-bg.jpg" mode="aspectFill" />
     <view class="hero-overlay" />
 
     <!-- 主体内容 -->

@@ -42,7 +42,7 @@ export default defineUniPages({
     color: '#999999',
     selectedColor: '#FF6B3D',
     backgroundColor: '#FFFFFF',
-    borderStyle: 'black',
+    borderStyle: 'white',
     list: [
       {
         pagePath: 'pages/chat/index',

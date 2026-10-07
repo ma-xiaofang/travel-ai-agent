@@ -2,7 +2,7 @@
   <view class="mine-page">
     <!-- Hero 区域 -->
     <view class="hero-section">
-      <image class="hero-bg" src="/static/hero/mine-bg.png" mode="aspectFill" />
+      <image class="hero-bg" src="/static/hero/mine-bg.jpg" mode="aspectFill" />
       <view class="hero-overlay" />
       <view class="hero-content" :style="{ paddingTop: (statusBarHeight + 16) + 'px' }">
         <view class="avatar-ring">

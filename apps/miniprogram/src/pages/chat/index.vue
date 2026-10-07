@@ -10,7 +10,7 @@
       :style="{ paddingTop: (statusBarHeight + 72) + 'px' }">
       <!-- 空状态 -->
       <view class="empty-state" v-if="messages.length === 0">
-        <image class="empty-img" src="/static/hero/chat-empty.png" mode="aspectFit" />
+        <image class="empty-img" src="/static/hero/chat-empty.png" mode="widthFix" />
         <text class="empty-title">Hi，想去哪里？</text>
         <text class="empty-sub">告诉我你的旅行计划，一切交给我</text>
 
@@ -484,7 +484,6 @@ function watchStream() {
 
 .empty-img {
   width: 360rpx;
-  height: 360rpx;
   margin-bottom: 20rpx;
 }
 
