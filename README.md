@@ -37,7 +37,9 @@
 
 - 会话对话测试（路由：`/#/sessions/conversation`）
 
-![会话对话测试](screenshots/sessions_conversation.png)
+  ![思考过程](screenshots/reason.jpeg)
+
+  ![会话对话测试](screenshots/sessions_conversation.png)
 
 - 工具详情（上半区，路由：`/#/tools`）
 
@@ -51,20 +53,20 @@
 
 **登录 / 注册**
 
-| 登录 | 注册 |
-| :--: | :--: |
+|                       登录                       |                        注册                         |
+| :----------------------------------------------: | :-------------------------------------------------: |
 | <img src="screenshots/mp-login.png" width="200"> | <img src="screenshots/mp-register.png" width="200"> |
 
 **对话 / 会话 / 我的**
 
-| 对话-空状态 | 会话-空状态 | 我的 |
-| :--: | :--: | :--: |
+|                      对话-空状态                      |                        会话-空状态                        |                      我的                       |
+| :---------------------------------------------------: | :-------------------------------------------------------: | :---------------------------------------------: |
 | <img src="screenshots/mp-chat-empty.png" width="200"> | <img src="screenshots/mp-sessions-empty.png" width="200"> | <img src="screenshots/mp-mine.png" width="200"> |
 
 **对话页**
 
-| ① | ② | ③ | ④ |
-| :--: | :--: | :--: | :--: |
+|                         ①                          |                         ②                          |                         ③                          |                         ④                          |
+| :------------------------------------------------: | :------------------------------------------------: | :------------------------------------------------: | :------------------------------------------------: |
 | <img src="screenshots/mp-chat-01.png" width="150"> | <img src="screenshots/mp-chat-02.png" width="150"> | <img src="screenshots/mp-chat-03.png" width="150"> | <img src="screenshots/mp-chat-04.png" width="150"> |
 
 ## 项目结构
