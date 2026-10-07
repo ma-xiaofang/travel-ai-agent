@@ -6,30 +6,16 @@
     </view>
 
     <!-- 消息列表 -->
-    <scroll-view
-      class="msg-list"
-      scroll-y
-      :scroll-into-view="scrollToView"
-      :scroll-with-animation="true"
-      :style="{ paddingTop: (statusBarHeight + 72) + 'px' }"
-    >
+    <scroll-view class="msg-list" scroll-y :scroll-into-view="scrollToView" :scroll-with-animation="true"
+      :style="{ paddingTop: (statusBarHeight + 72) + 'px' }">
       <!-- 空状态 -->
       <view class="empty-state" v-if="messages.length === 0">
-        <image
-          class="empty-img"
-          src="/static/hero/chat-empty.png"
-          mode="aspectFit"
-        />
+        <image class="empty-img" src="/static/hero/chat-empty.png" mode="aspectFit" />
         <text class="empty-title">Hi，想去哪里？</text>
         <text class="empty-sub">告诉我你的旅行计划，一切交给我</text>
 
         <view class="prompts-list">
-          <view
-            class="prompt-chip"
-            v-for="p in quickPrompts"
-            :key="p.text"
-            @click="handleQuickPrompt(p.text)"
-          >
+          <view class="prompt-chip" v-for="p in quickPrompts" :key="p.text" @click="handleQuickPrompt(p.text)">
             <text class="chip-emoji">{{ p.emoji }}</text>
             <text class="chip-text">{{ p.text }}</text>
           </view>
@@ -37,13 +23,7 @@
       </view>
 
       <!-- 消息列表 -->
-      <view
-        v-for="(msg, idx) in messages"
-        :key="idx"
-        :id="'msg-' + idx"
-        class="msg-wrapper"
-        :class="msg.role"
-      >
+      <view v-for="(msg, idx) in messages" :key="idx" :id="'msg-' + idx" class="msg-wrapper" :class="msg.role">
         <!-- 用户消息 -->
         <view v-if="msg.role === 'user'" class="user-msg">
           <text>{{ msg.content }}</text>
@@ -52,11 +32,7 @@
         <!-- AI 消息 -->
         <view v-else class="ai-msg">
           <!-- 思维链 -->
-          <view
-            v-if="msg.reasoning"
-            class="reasoning-box"
-            @click="msg.reasoningOpen = !msg.reasoningOpen"
-          >
+          <view v-if="msg.reasoning" class="reasoning-box" @click="msg.reasoningOpen = !msg.reasoningOpen">
             <view class="reasoning-header">
               <view class="reasoning-label">
                 <text class="reasoning-dot" />
@@ -69,13 +45,19 @@
             </view>
           </view>
 
+          <!-- 结构化行程卡（可编辑） -->
+          <ItineraryCard v-if="msg.artifact && msg.artifact.plan && msg.artifact.plan.length" :artifact="msg.artifact"
+            @save="handleSaveArtifact(msg, $event)" />
+
+          <!-- 文字版折叠开关 -->
+          <text v-if="msg.artifact && msg.content && !msg.streaming" class="text-toggle"
+            @click="msg.textOpen = !msg.textOpen">
+            {{ msg.textOpen ? '收起文字版行程' : '查看文字版行程' }}
+          </text>
+
           <!-- 正文：流式与最终均走 Markdown 渲染 -->
-          <mp-html
-            v-if="msg.content"
-            :content="renderMarkdown(msg.content)"
-            selectable
-            :tag-style="tagStyle"
-          />
+          <mp-html v-if="msg.content && (!msg.artifact || msg.streaming || msg.textOpen)"
+            :content="renderMarkdown(msg.content)" selectable :tag-style="tagStyle" />
 
           <!-- 打字光标 -->
           <text v-if="msg.streaming" class="typing-cursor">▎</text>
@@ -88,22 +70,10 @@
     <!-- 底部输入区 -->
     <view class="input-bar">
       <view class="input-wrapper">
-        <input
-          class="msg-input"
-          v-model="inputText"
-          placeholder="输入你想去的地方..."
-          placeholder-style="color:#bbb"
-          confirm-type="send"
-          :disabled="streaming"
-          @confirm="handleSend"
-        />
-        <button
-          v-if="!streaming"
-          class="send-btn"
-          :class="{ disabled: !inputText.trim() }"
-          hover-class="none"
-          @click="handleSend"
-        >
+        <input class="msg-input" v-model="inputText" placeholder="输入你想去的地方..." placeholder-style="color:#bbb"
+          confirm-type="send" :disabled="streaming" @confirm="handleSend" />
+        <button v-if="!streaming" class="send-btn" :class="{ disabled: !inputText.trim() }" hover-class="none"
+          @click="handleSend">
           <image class="send-icon" src="/static/send.png" mode="aspectFit" />
         </button>
         <button v-else class="stop-btn" @click="abort">停止</button>
@@ -115,8 +85,10 @@
 <script setup lang="ts">
 import { ref, reactive, nextTick } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
-import { useChat, getHistoryApi } from '@/api'
+import { useChat, getHistoryApi, saveArtifactApi } from '@/api'
 import mpHtml from 'mp-html/dist/uni-app/components/mp-html/mp-html'
+import ItineraryCard from '@/components/ItineraryCard/ItineraryCard.vue'
+import type { ItineraryArtifact } from '@/types/api'
 import { useUserStore, useChatStore } from '@/store'
 
 /** mp-html 样式映射 */
@@ -334,7 +306,7 @@ onShow(() => {
   }
 })
 
-const { content, reasoning, sessionId, streaming, send, abort } = useChat()
+const { content, reasoning, artifact, sessionId, messageId, streaming, send, abort } = useChat()
 const chatStore = useChatStore()
 
 const inputText = ref('')
@@ -343,8 +315,14 @@ const scrollToView = ref('')
 interface Message {
   role: 'user' | 'ai'
   content: string
+  /** 助手消息 ID（历史接口返回 / 流结束时下发），保存行程卡编辑时使用 */
+  messageId?: string
   reasoning?: string
   reasoningOpen?: boolean
+  /** 结构化行程卡 */
+  artifact?: ItineraryArtifact | null
+  /** 文字版行程展开状态 */
+  textOpen?: boolean
   streaming?: boolean
 }
 const messages = reactive<Message[]>([])
@@ -371,6 +349,8 @@ async function loadSessionHistory(id: string) {
       messages.push({
         role,
         content: m.content,
+        messageId: m.id,
+        artifact: m.artifact ?? null,
         streaming: false,
       })
     })
@@ -401,6 +381,21 @@ function handleQuickPrompt(prompt: string) {
   handleSend()
 }
 
+/** 保存行程卡的编辑结果到后端 */
+async function handleSaveArtifact(msg: Message, artifact: ItineraryArtifact) {
+  if (!msg.messageId) {
+    uni.showToast({ title: '行程还在生成中，请稍后再试', icon: 'none' })
+    return
+  }
+
+  try {
+    await saveArtifactApi(msg.messageId, artifact)
+    uni.showToast({ title: '行程已保存', icon: 'success' })
+  } catch {
+    uni.showToast({ title: '保存失败，请重试', icon: 'none' })
+  }
+}
+
 function scrollToBottom() {
   nextTick(() => {
     scrollToView.value = 'msg-bottom'
@@ -417,6 +412,8 @@ function watchStream() {
 
     msg.content = content.value
     msg.reasoning = reasoning.value
+    if (artifact.value) msg.artifact = artifact.value
+    if (messageId.value) msg.messageId = messageId.value
     if (reasoning.value && msg.reasoningOpen === false && msg.reasoning === '') {
       msg.reasoningOpen = true
     }
@@ -471,6 +468,7 @@ function watchStream() {
   padding: 0;
   overflow-x: hidden;
 }
+
 .msg-list ::v-deep ._root {
   overflow-x: hidden;
   word-break: break-word;
@@ -622,6 +620,14 @@ function watchStream() {
   border-top: 1rpx solid #EEE;
 }
 
+/* ======== 文字版行程折叠开关 ======== */
+.text-toggle {
+  display: inline-block;
+  font-size: 24rpx;
+  color: #FF6B3D;
+  padding: 8rpx 0 12rpx;
+}
+
 /* ======== 打字光标 ======== */
 .typing-cursor {
   animation: blink 1s infinite;
@@ -630,8 +636,16 @@ function watchStream() {
 }
 
 @keyframes blink {
-  0%, 50% { opacity: 1; }
-  51%, 100% { opacity: 0; }
+
+  0%,
+  50% {
+    opacity: 1;
+  }
+
+  51%,
+  100% {
+    opacity: 0;
+  }
 }
 
 /* ======== 底部输入区 ======== */

@@ -54,6 +54,41 @@ interface ChatResult {
     userId: string
     message: string
     answer: string
+    artifact?: ItineraryArtifact | null
+}
+
+// ---------------------- 结构化行程（artifact） ----------------------
+
+/** 行程时段 */
+type ItineraryPeriod = '上午' | '午餐' | '下午' | '晚餐' | '晚上'
+
+/** 单条行程安排 */
+interface ItineraryItem {
+    period: ItineraryPeriod
+    title: string
+    detail?: string
+    transport?: string
+    budget?: string
+}
+
+/** 单日行程 */
+interface ItineraryDay {
+    day: number
+    theme?: string
+    items: ItineraryItem[]
+    dailyBudget?: string
+}
+
+/** 行程卡（generate_itinerary 工具产出的结构化结果） */
+interface ItineraryArtifact {
+    destination: string
+    days: number
+    style?: string
+    budgetLevel?: string
+    summary?: string
+    plan: ItineraryDay[]
+    /** 数据来源：rag / tavily / api / mock */
+    source?: string
 }
 
 /** 创建会话请求 */
@@ -82,6 +117,7 @@ interface HistoryMessage {
     id: string
     role: 'USER' | 'ASSISTANT' | 'SYSTEM'
     content: string
+    artifact?: ItineraryArtifact | null
     createdAt: string
 }
 
@@ -90,6 +126,12 @@ interface HistoryResult {
     sessionId: string
     count: number
     messages: HistoryMessage[]
+}
+
+/** 保存行程卡编辑结果返回值 */
+interface SaveArtifactResult {
+    success: boolean
+    messageId: string
 }
 
 /** 工具元信息 */
@@ -126,11 +168,16 @@ export type {
     TokenPair,
     ChatParams,
     ChatResult,
+    ItineraryPeriod,
+    ItineraryItem,
+    ItineraryDay,
+    ItineraryArtifact,
     CreateSessionParams,
     SessionInfo,
     SessionItem,
     HistoryMessage,
     HistoryResult,
+    SaveArtifactResult,
     ToolMeta,
     ToolsResult,
     HealthResult,

@@ -88,6 +88,8 @@ model ChatMessage {
   sessionId String      @map("session_id")
   role      MessageRole
   content   String      @db.Text
+  /// 工具产出的结构化结果（如可编辑行程卡）；无则为 null
+  artifact  Json?
   createdAt DateTime    @default(now()) @map("created_at")
   session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 

@@ -13,6 +13,8 @@ import type {
     SessionInfo,
     SessionItem,
     HistoryResult,
+    SaveArtifactResult,
+    ItineraryArtifact,
     ToolsResult,
     HealthResult,
 } from '@/types/api'
@@ -45,6 +47,19 @@ export async function clearHistoryApi(sessionId: string) {
     return res.data as { success: boolean; message: string }
 }
 
+/**
+ * 保存行程卡编辑结果（覆盖助手消息上的结构化行程）
+ *
+ * @param messageId 助手消息 ID（来自流式结束时的 session 事件或历史列表）
+ * @param artifact 编辑后的完整行程卡数据
+ */
+export async function saveArtifactApi(messageId: string, artifact: ItineraryArtifact) {
+    const res: any = await http.put(`/api/agent/messages/${messageId}/artifact`, {
+        data: { artifact },
+    })
+    return res.data as SaveArtifactResult
+}
+
 // ==================== 工具 & 健康 ====================
 
 /** 获取可用 Agent 工具列表 */
@@ -75,8 +90,12 @@ export interface UseChatReturn {
     content: Ref<string>
     /** 思维链内容（DeepSeek reasoning） */
     reasoning: Ref<string>
+    /** 工具产出的结构化结果（如行程卡），无则为 null */
+    artifact: Ref<any>
     /** 服务端返回的会话 ID */
     sessionId: Ref<string>
+    /** 本轮助手消息 ID（流结束时下发，用于保存行程卡编辑） */
+    messageId: Ref<string>
     /** 是否正在流式接收中 */
     streaming: Ref<boolean>
     /** 错误信息 */
@@ -105,7 +124,9 @@ export interface UseChatReturn {
 export function useChat(): UseChatReturn {
     const content = ref('')
     const reasoning = ref('')
+    const artifact = ref<any>(null)
     const sessionId = ref('')
+    const messageId = ref('')
     const streaming = ref(false)
     const error = ref('')
 
@@ -116,6 +137,8 @@ export function useChat(): UseChatReturn {
 
         content.value = ''
         reasoning.value = ''
+        artifact.value = null
+        messageId.value = ''
         error.value = ''
         streaming.value = true
 
@@ -134,8 +157,12 @@ export function useChat(): UseChatReturn {
                     case 'reasoning':
                         reasoning.value += msg.content ?? ''
                         break
+                    case 'artifact':
+                        artifact.value = msg.artifact ?? null
+                        break
                     case 'session':
                         sessionId.value = msg.sessionId ?? ''
+                        messageId.value = msg.messageId ?? ''
                         break
                     case 'error':
                         error.value = msg.message ?? '未知错误'
@@ -168,7 +195,9 @@ export function useChat(): UseChatReturn {
     return {
         content,
         reasoning,
+        artifact,
         sessionId,
+        messageId,
         streaming,
         error,
         send,

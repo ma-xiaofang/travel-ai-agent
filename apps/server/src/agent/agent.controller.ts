@@ -1,12 +1,15 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
   Get,
   HttpCode,
   HttpStatus,
+  NotFoundException,
   Param,
   Post,
+  Put,
   Res,
   UseGuards,
 } from '@nestjs/common';
@@ -14,6 +17,8 @@ import type { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { AgentService } from './agent.service.js';
 import { ChatDto, CreateSessionDto } from './dto/chat.dto.js';
+import { MessageRole } from '../../generated/prisma/client.js';
+import { itineraryArtifactSchema } from '../tools/itinerary.artifact.js';
 import { MemoryService } from '../memory/memory.service.js';
 import { SessionService } from '../session/session.service.js';
 import { ToolsService } from '../tools/tools.service.js';
@@ -64,10 +69,19 @@ export class AgentController {
           res.write(
             `data: ${JSON.stringify({ type: 'reasoning', content: chunk.content })}\n\n`,
           );
-        } else if (chunk.type === 'session') {
-          // 发送会话事件
+        } else if (chunk.type === 'artifact') {
+          // 发送工具产出的结构化结果（如可编辑行程卡）
           res.write(
-            `data: ${JSON.stringify({ type: 'session', sessionId: chunk.sessionId })}\n\n`,
+            `data: ${JSON.stringify({ type: 'artifact', artifact: chunk.artifact })}\n\n`,
+          );
+        } else if (chunk.type === 'session') {
+          // 发送会话事件（附带助手消息 ID，供前端保存行程卡编辑）
+          res.write(
+            `data: ${JSON.stringify({
+              type: 'session',
+              sessionId: chunk.sessionId,
+              messageId: chunk.messageId,
+            })}\n\n`,
           );
         }
       }
@@ -130,6 +144,36 @@ export class AgentController {
     return { success: true, message: `会话 ${sessionId} 的消息已清除` };
   }
 
+  /**
+   * 保存行程卡编辑结果（覆盖助手消息上的 artifact）。
+   *
+   * 前端在小程序里直接编辑行程卡，点「保存」后调用本接口落库；
+   * 仅允许修改**自己会话**中的**助手消息**。
+   */
+  @Put('messages/:messageId/artifact')
+  async updateMessageArtifact(
+    @CurrentUser() user: AuthUser,
+    @Param('messageId') messageId: string,
+    @Body() body: { artifact?: unknown },
+  ) {
+    const message = await this.memoryService.getMessage(messageId);
+    if (!message) {
+      throw new NotFoundException('消息不存在');
+    }
+    await this.sessionService.assertSessionOwner(message.sessionId, user.userId);
+    if (message.role !== MessageRole.ASSISTANT) {
+      throw new BadRequestException('仅支持编辑助手消息');
+    }
+
+    const parsed = itineraryArtifactSchema.safeParse(body.artifact);
+    if (!parsed.success) {
+      throw new BadRequestException('行程数据格式不正确');
+    }
+
+    await this.memoryService.updateMessageArtifact(messageId, parsed.data);
+    return { success: true, messageId };
+  }
+
   @Get('tools')
   getTools() {
     return { tools: this.toolsService.getToolMetadata() };
@@ -140,7 +184,7 @@ export class AgentController {
   health() {
     return {
       status: 'ok',
-      service: '旅途 AI 旅行规划助手',
+      service: '途旅 AI 旅行规划助手',
       llmProvider: 'deepseek',
       model: this.config.get<string>('DEEPSEEK_MODEL', 'deepseek-v4-flash'),
       webSearch: this.tavilyService.enabled ? 'tavily' : 'disabled',

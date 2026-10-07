@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-旅途 · AI 旅行规划助手 — 基于 NestJS 11 + LangGraph + Vue 3 的 pnpm monorepo。10 个工具协同工作（天气、景点、行程、预算、签证、货币、打包清单、翻译、联网搜索、会话标题）。
+途旅 · AI 旅行规划助手 — 基于 NestJS 11 + LangGraph + Vue 3 的 pnpm monorepo。10 个工具协同工作（天气、景点、行程、预算、签证、货币、打包清单、翻译、联网搜索、会话标题）。
 
 ## 项目结构
 

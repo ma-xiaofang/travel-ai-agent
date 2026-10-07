@@ -11,6 +11,7 @@ export {
     listSessionsApi,
     getHistoryApi,
     clearHistoryApi,
+    saveArtifactApi,
     getToolsApi,
     healthApi,
     chatApi,

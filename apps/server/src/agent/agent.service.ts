@@ -17,7 +17,7 @@ import { ToolsService } from '../tools/tools.service.js';
  * 系统提示词：定义 Agent 的角色设定、可用工具清单与工作原则。
  * 每次调用模型时都会注入到消息序列最前面，约束模型的行为与输出风格。
  */
-const SYSTEM_PROMPT = `你是「旅途 · AI」旅行规划师，专业、热情的旅行助手。
+const SYSTEM_PROMPT = `你是「途旅 · AI」旅行规划师，专业、热情的旅行助手。
 
 可用工具：
 - get_weather：查询目的地天气和穿衣建议
@@ -143,17 +143,18 @@ export class AgentService {
   /**
    * 流式对话（SSE）。
    *
-   * 逐步产出三类事件：
+   * 逐步产出四类事件：
    * - `reasoning` — DeepSeek 思维链（reasoning_content），前端可折叠展示
    * - `text` — 正文回答内容（逐字增量）
+   * - `artifact` — 工具产出的结构化结果（如可编辑行程卡），前端按类型渲染
    * - `session` — 会话 ID，流结束时下发，供前端关联/新建会话
    *
-   * 对话结束后会将用户消息与完整回答写入对话历史。
+   * 对话结束后会将用户消息与完整回答写入对话历史（含 artifact）。
    *
    * @param userId 当前用户 ID（用于会话归属校验）
    * @param message 用户输入内容
    * @param sessionId 可选会话 ID；为空时自动创建新会话
-   * @yields 文本 / 思维链 / 会话事件
+   * @yields 文本 / 思维链 / 结构化结果 / 会话事件
    */
   async *streamChat(
     userId: string,
@@ -162,7 +163,8 @@ export class AgentService {
   ): AsyncGenerator<
     | { type: 'text'; content: string }
     | { type: 'reasoning'; content: string }
-    | { type: 'session'; sessionId: string }
+    | { type: 'artifact'; artifact: unknown }
+    | { type: 'session'; sessionId: string; messageId?: string }
   > {
     // 校验/创建会话归属，确保 userId 与 sessionId 匹配
     const session = await this.sessionService.ensureSession(sessionId, userId);
@@ -172,6 +174,10 @@ export class AgentService {
     const messages = [...history, new HumanMessage(message)];
     // 累积本轮正文，用于流结束后整体落库
     let fullContent = '';
+    // 收集本轮工具产出的结构化结果，落库到助手消息
+    const artifacts: unknown[] = [];
+    // 落库后的助手消息 ID，随 session 事件下发（前端据此回写行程卡编辑）
+    let assistantMessageId: string | undefined;
 
     try {
       // streamMode: 'messages' —— 以消息为粒度流式产出，便于逐字转发
@@ -201,25 +207,38 @@ export class AgentService {
             fullContent += chunk;
             yield { type: 'text', content: chunk };
           }
+        } else if (meta.langgraph_node === 'tools') {
+          // 工具节点：捕获 content_and_artifact 工具产出的结构化结果并透传前端
+          const artifact = (msg as any).artifact;
+          if (artifact) {
+            artifacts.push(artifact);
+            yield { type: 'artifact', artifact };
+          }
         }
       }
 
-      // 持久化本轮对话：先写用户消息，再写完整回答
+      // 持久化本轮对话：先写用户消息，再写完整回答（结构化结果挂在助手消息上）
       await this.memoryService.addMessage(
         session.id,
         MessageRole.USER,
         message,
       );
       if (fullContent) {
-        await this.memoryService.addMessage(
-          session.id,
-          MessageRole.ASSISTANT,
-          fullContent,
-        );
+        assistantMessageId =
+          (await this.memoryService.addMessage(
+            session.id,
+            MessageRole.ASSISTANT,
+            fullContent,
+            artifacts[0],
+          )) ?? undefined;
       }
 
-      // 流正常结束，下发会话事件
-      yield { type: 'session', sessionId: session.id };
+      // 流正常结束，下发会话事件（附带助手消息 ID，供前端保存行程卡编辑）
+      yield {
+        type: 'session',
+        sessionId: session.id,
+        messageId: assistantMessageId,
+      };
     } catch (error: any) {
       // 出错时记录日志，并以文本事件向前端反馈友好错误，最后仍下发会话事件
       this.logger.error(`streamChat failed: ${error.message}`, error.stack);
@@ -260,6 +279,11 @@ export class AgentService {
       .reverse()
       .find((m) => m instanceof AIMessage);
     const content = lastAI?.content?.toString() || '抱歉，无法处理您的请求';
+    // 反向查找工具产出的结构化结果（如可编辑行程卡）
+    const artifact = [...result.messages]
+      .reverse()
+      .map((m) => (m as any).artifact)
+      .find((a) => a != null);
 
     // 持久化本轮对话
     await this.memoryService.addMessage(session.id, MessageRole.USER, message);
@@ -267,8 +291,9 @@ export class AgentService {
       session.id,
       MessageRole.ASSISTANT,
       content,
+      artifact,
     );
 
-    return { sessionId: session.id, userId, message, answer: content };
+    return { sessionId: session.id, userId, message, answer: content, artifact };
   }
 }

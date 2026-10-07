@@ -18,6 +18,7 @@ Thumbs.db
 
 # IDE
 .idea/
+.trae/
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json

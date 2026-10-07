@@ -1,7 +1,7 @@
 {
   "name": "travel-nest",
   "version": "0.0.1",
-  "description": "旅途 AI 旅行规划助手后端 — NestJS + LangGraph + Prisma + PostgreSQL",
+  "description": "途旅 AI 旅行规划助手后端 — NestJS + LangGraph + Prisma + PostgreSQL",
   "author": "",
   "private": true,
   "license": "UNLICENSED",
@@ -92,14 +92,17 @@
       "ts"
     ],
     "rootDir": "src",
+    "testEnvironment": "<rootDir>/../test/jest-node-environment.cjs",
     "testRegex": ".*\\.spec\\.ts$",
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
+    },
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],
-    "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "coverageDirectory": "../coverage"
   }
 }

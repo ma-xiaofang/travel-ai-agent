@@ -1,6 +1,6 @@
-# 旅途 · travel-nest
+# 途旅 · travel-nest
 
-「旅途」AI 旅行规划助手后端 — 基于 **NestJS 11**、**LangGraph**、**Prisma 7**、**PostgreSQL + PGVector** 构建。提供流式对话 Agent、8 个旅行工具（均已接入 RAG 知识库）、用户认证与会话持久化。
+「途旅」AI 旅行规划助手后端 — 基于 **NestJS 11**、**LangGraph**、**Prisma 7**、**PostgreSQL + PGVector** 构建。提供流式对话 Agent、8 个旅行工具（均已接入 RAG 知识库）、用户认证与会话持久化。
 
 默认端口：`3000`（可通过 `PORT` 修改）。
 

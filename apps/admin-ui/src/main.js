@@ -1,3 +1,5 @@
+
+import 'normalize.css'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import ElementPlus from 'element-plus'

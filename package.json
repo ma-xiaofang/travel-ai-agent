@@ -2,7 +2,7 @@
   "name": "travel-agent",
   "version": "0.1.0",
   "private": true,
-  "description": "旅途 · AI 旅行规划助手 Monorepo",
+  "description": "途旅 · AI 旅行规划助手 Monorepo",
   "scripts": {
     "dev:backend": "cd apps/server && pnpm run start:dev",
     "dev:admin": "cd apps/admin-ui && pnpm run dev",

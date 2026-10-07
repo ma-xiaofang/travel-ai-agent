@@ -322,7 +322,7 @@ export class RagService {
     const prompt = ChatPromptTemplate.fromMessages([
       [
         'system',
-        `你是「旅途」旅行知识库问答助手，严格基于知识库资料回答。
+        `你是「途旅」旅行知识库问答助手，严格基于知识库资料回答。
 规则：
 1. 只根据参考资料回答，不能使用资料外的知识
 2. 资料中没有相关信息，回答「知识库中暂无相关内容」

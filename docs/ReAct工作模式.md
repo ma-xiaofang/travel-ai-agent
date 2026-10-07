@@ -1,6 +1,6 @@
 # ReAct 工作模式
 
-> 旅途 · AI 旅行规划助手
+> 途旅 · AI 旅行规划助手
 > 代码入口：`apps/server/src/agent/agent.service.ts`
 > 关联：`docs/Agent核心流程.md` · LangGraph · DeepSeek
 

@@ -5,10 +5,14 @@ import { useUserStore } from '@/store'
  * 对应 NestJS AgentController.streamChat 的产出
  */
 export interface SSEMessage {
-    type: 'text' | 'reasoning' | 'session' | 'done' | 'error'
+    type: 'text' | 'reasoning' | 'artifact' | 'session' | 'done' | 'error'
     content?: string
     sessionId?: string
+    /** 本轮助手消息 ID（随 session 事件下发，用于保存行程卡编辑） */
+    messageId?: string
     message?: string
+    /** 工具产出的结构化结果（如行程卡） */
+    artifact?: any
 }
 
 /** SSE 连接配置 */

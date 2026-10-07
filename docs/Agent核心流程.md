@@ -1,6 +1,6 @@
 # Agent 核心流程
 
-> 旅途 · AI 旅行规划助手  
+> 途旅 · AI 旅行规划助手  
 > 代码入口：`travel-nest/src/agent/agent.service.ts`  
 > 关联：`AgentController` · `MemoryService` · `SessionService` · `ToolsService` · LangGraph
 
@@ -115,7 +115,7 @@ sequenceDiagram
 
 定义于 `agent.service.ts` 顶部，每次 `callModel` 时作为 `SystemMessage` 拼在最前：
 
-- **人设**：「旅途」AI 旅行规划师
+- **人设**：「途旅」AI 旅行规划师
 - **工具清单**：9 个 Tool 及调用时机（含 `update_session_title`）
 - **行为约束**：主动调工具、多工具串联、中文 + emoji、不暴露推理过程
 
