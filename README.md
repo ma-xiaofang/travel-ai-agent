@@ -17,6 +17,8 @@
 
 ## 界面截图
 
+### 管理后台
+
 - 登录页（路由：`/#/login`）
 
 ![登录页](screenshots/login.png)
@@ -29,6 +31,10 @@
 
 ![RAG 调试](screenshots/knowledge_playground.png)
 
+- 消息管理（路由：`/#/sessions/messages`）
+
+![消息管理](screenshots/sessions-manager.png)
+
 - 会话对话测试（路由：`/#/sessions/conversation`）
 
 ![会话对话测试](screenshots/sessions_conversation.png)
@@ -40,6 +46,26 @@
 - 工具详情（下半区，路由：`/#/tools`）
 
 ![工具详情下半区](screenshots/toolinfo_2.png)
+
+### 小程序（微信 / H5）
+
+**登录 / 注册**
+
+| 登录 | 注册 |
+| :--: | :--: |
+| <img src="screenshots/mp-login.png" width="200"> | <img src="screenshots/mp-register.png" width="200"> |
+
+**对话 / 会话 / 我的**
+
+| 对话-空状态 | 会话-空状态 | 我的 |
+| :--: | :--: | :--: |
+| <img src="screenshots/mp-chat-empty.png" width="200"> | <img src="screenshots/mp-sessions-empty.png" width="200"> | <img src="screenshots/mp-mine.png" width="200"> |
+
+**对话页**
+
+| ① | ② | ③ | ④ |
+| :--: | :--: | :--: | :--: |
+| <img src="screenshots/mp-chat-01.png" width="150"> | <img src="screenshots/mp-chat-02.png" width="150"> | <img src="screenshots/mp-chat-03.png" width="150"> | <img src="screenshots/mp-chat-04.png" width="150"> |
 
 ## 项目结构
 
@@ -110,19 +136,19 @@ docker run -d \
 
 **参数说明**：
 
-| 参数 | 说明 |
-|------|------|
-| `--name travel-pgvector` | 容器名称，可自定义 |
-| `POSTGRES_USER` | 数据库用户（默认 postgres） |
-| `POSTGRES_PASSWORD` | 数据库密码，**请修改为强密码** |
-| `POSTGRES_DB` | 默认创建的数据库名，需与 `DATABASE_URL` 一致 |
-| `-p 5432:5432` | 端口映射（宿主机:容器） |
-| `pgvector/pgvector:pg17` | 官方镜像，基于 PostgreSQL 17 |
+| 参数                     | 说明                                        |
+| ------------------------ | ------------------------------------------- |
+| `--name travel-pgvector` | 容器名称，可自定义                          |
+| `POSTGRES_USER`          | 数据库用户（默认 postgres）                 |
+| `POSTGRES_PASSWORD`      | 数据库密码，**请修改为强密码**              |
+| `POSTGRES_DB`            | 默认创建的数据库名，需与`DATABASE_URL` 一致 |
+| `-p 5432:5432`           | 端口映射（宿主机:容器）                     |
+| `pgvector/pgvector:pg17` | 官方镜像，基于 PostgreSQL 17                |
 
 **镜像选择**：
 
-| 镜像标签 | PostgreSQL 版本 |
-|----------|----------------|
+| 镜像标签                 | PostgreSQL 版本       |
+| ------------------------ | --------------------- |
 | `pgvector/pgvector:pg17` | PostgreSQL 17（推荐） |
 
 **验证 pgvector 扩展**：
@@ -224,6 +250,7 @@ pnpm run dev:admin
 ```
 
 访问：
+
 - 管理后台：`http://localhost:5174`
 - Swagger 文档：`http://localhost:3000/api`（开发环境）
 - 健康检查：`http://localhost:3000/api/agent/health`
@@ -236,55 +263,55 @@ pnpm run dev:admin
 
 ### Agent（`/api/agent`）
 
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| `POST` | `/chat/stream` | SSE 流式聊天（text + reasoning + session 事件） |
-| `POST` | `/chat` | 同步聊天 |
-| `GET` | `/sessions` | 当前用户会话列表 |
-| `POST` | `/sessions` | 创建会话 |
-| `GET` | `/history/:sessionId` | 会话消息历史 |
-| `DELETE` | `/history/:sessionId` | 清除会话消息 |
-| `GET` | `/health` | 健康检查 |
+| 方法     | 路径                  | 说明                                            |
+| -------- | --------------------- | ----------------------------------------------- |
+| `POST`   | `/chat/stream`        | SSE 流式聊天（text + reasoning + session 事件） |
+| `POST`   | `/chat`               | 同步聊天                                        |
+| `GET`    | `/sessions`           | 当前用户会话列表                                |
+| `POST`   | `/sessions`           | 创建会话                                        |
+| `GET`    | `/history/:sessionId` | 会话消息历史                                    |
+| `DELETE` | `/history/:sessionId` | 清除会话消息                                    |
+| `GET`    | `/health`             | 健康检查                                        |
 
 ### Auth（`/api/auth`）
 
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| `POST` | `/register` | 用户注册 |
-| `POST` | `/login` | 用户登录（返回 Access + Refresh Token） |
-| `POST` | `/refresh` | 刷新令牌 |
-| `POST` | `/logout` | 登出 |
+| 方法   | 路径        | 说明                                    |
+| ------ | ----------- | --------------------------------------- |
+| `POST` | `/register` | 用户注册                                |
+| `POST` | `/login`    | 用户登录（返回 Access + Refresh Token） |
+| `POST` | `/refresh`  | 刷新令牌                                |
+| `POST` | `/logout`   | 登出                                    |
 
 ### Admin（`/api/admin`，仅 ADMIN 角色）
 
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| `GET` | `/stats` | 仪表盘统计 |
-| `GET` | `/sessions` | 会话分页列表 |
-| `GET` | `/sessions/:id` | 会话详情（含消息） |
-| `GET` | `/messages` | 消息分页列表 |
-| `GET` | `/users` | 用户列表 |
-| `GET` | `/knowledge/collections` | 知识库集合管理 |
-| `GET` | `/knowledge/documents` | 知识文档管理 |
+| 方法  | 路径                     | 说明               |
+| ----- | ------------------------ | ------------------ |
+| `GET` | `/stats`                 | 仪表盘统计         |
+| `GET` | `/sessions`              | 会话分页列表       |
+| `GET` | `/sessions/:id`          | 会话详情（含消息） |
+| `GET` | `/messages`              | 消息分页列表       |
+| `GET` | `/users`                 | 用户列表           |
+| `GET` | `/knowledge/collections` | 知识库集合管理     |
+| `GET` | `/knowledge/documents`   | 知识文档管理       |
 
 ### Tools（`/api/tools`）
 
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| `GET` | `/tools` | 工具元数据列表 |
-| `POST` | `/tools/weather` | 天气查询 |
-| `POST` | `/tools/attractions` | 景点推荐 |
-| `POST` | `/tools/itinerary` | 行程生成 |
-| `POST` | `/tools/budget` | 预算估算 |
-| `POST` | `/tools/visa` | 签证查询 |
-| `POST` | `/tools/currency` | 货币换算 |
-| `POST` | `/tools/packing` | 打包清单 |
-| `POST` | `/tools/translate` | 短语翻译 |
-| `POST` | `/tools/web-search` | 联网搜索 |
+| 方法   | 路径                 | 说明           |
+| ------ | -------------------- | -------------- |
+| `GET`  | `/tools`             | 工具元数据列表 |
+| `POST` | `/tools/weather`     | 天气查询       |
+| `POST` | `/tools/attractions` | 景点推荐       |
+| `POST` | `/tools/itinerary`   | 行程生成       |
+| `POST` | `/tools/budget`      | 预算估算       |
+| `POST` | `/tools/visa`        | 签证查询       |
+| `POST` | `/tools/currency`    | 货币换算       |
+| `POST` | `/tools/packing`     | 打包清单       |
+| `POST` | `/tools/translate`   | 短语翻译       |
+| `POST` | `/tools/web-search`  | 联网搜索       |
 
 ## 一次流式对话的完整流程
 
-入口：`POST /api/agent/chat/stream`  
+入口：`POST /api/agent/chat/stream`
 Body：`{ userId, sessionId?, message }`
 
 ```mermaid
@@ -329,15 +356,15 @@ sequenceDiagram
 
 ### 步骤说明
 
-| 步骤 | 代码位置 | 说明 |
-|------|----------|------|
-| 1. 确保会话 | `sessionService.ensureSession()` | 有 `sessionId` 则复用，否则新建 `chat_sessions` |
-| 2. 编译 Graph | `buildGraph(session.id)` | 绑定 9 个 Tool（含会话标题） |
-| 3. 加载历史 | `memoryService.getHistory()` | DB → `HumanMessage` / `AIMessage` |
-| 4. 拼消息 | `[...history, new HumanMessage(message)]` | 送入 Graph 初始状态 |
-| 5. 流式执行 | `graph.stream({ streamMode: 'messages' })` | 只 yield `agent` 节点的文本 chunk |
-| 6. 持久化 | `memoryService.addMessage()` | 流结束后写入 USER / ASSISTANT |
-| 7. 回传 sessionId | `yield { type: 'session', sessionId }` | 前端可存 localStorage |
+| 步骤              | 代码位置                                   | 说明                                           |
+| ----------------- | ------------------------------------------ | ---------------------------------------------- |
+| 1. 确保会话       | `sessionService.ensureSession()`           | 有`sessionId` 则复用，否则新建 `chat_sessions` |
+| 2. 编译 Graph     | `buildGraph(session.id)`                   | 绑定 9 个 Tool（含会话标题）                   |
+| 3. 加载历史       | `memoryService.getHistory()`               | DB →`HumanMessage` / `AIMessage`               |
+| 4. 拼消息         | `[...history, new HumanMessage(message)]`  | 送入 Graph 初始状态                            |
+| 5. 流式执行       | `graph.stream({ streamMode: 'messages' })` | 只 yield`agent` 节点的文本 chunk               |
+| 6. 持久化         | `memoryService.addMessage()`               | 流结束后写入 USER / ASSISTANT                  |
+| 7. 回传 sessionId | `yield { type: 'session', sessionId }`     | 前端可存 localStorage                          |
 
 ## LLM 配置
 
@@ -363,34 +390,34 @@ DeepSeek V4 模型支持"思考模式"——在回答之前先输出推理过程
 
 ## 技术栈
 
-| 层 | 技术 |
-|----|------|
-| 后端框架 | NestJS 11 |
-| Agent 框架 | LangGraph (LangChain) |
-| LLM | DeepSeek V4（OpenAI 兼容） |
-| 数据库 | PostgreSQL 17 |
-| ORM | Prisma 7 |
-| 向量存储 | PGVector |
-| 向量嵌入 | Zhipu Embedding-3 |
-| 认证 | JWT（Access + Refresh Token） |
-| 管理前端 | Vue 3 + Element Plus + Pinia |
+| 层            | 技术                                   |
+| ------------- | -------------------------------------- |
+| 后端框架      | NestJS 11                              |
+| Agent 框架    | LangGraph (LangChain)                  |
+| LLM           | DeepSeek V4（OpenAI 兼容）             |
+| 数据库        | PostgreSQL 17                          |
+| ORM           | Prisma 7                               |
+| 向量存储      | PGVector                               |
+| 向量嵌入      | Zhipu Embedding-3                      |
+| 认证          | JWT（Access + Refresh Token）          |
+| 管理前端      | Vue 3 + Element Plus + Pinia           |
 | Markdown 渲染 | markdown-it + highlight.js + DOMPurify |
-| 包管理 | pnpm 10 (monorepo) |
+| 包管理        | pnpm 10 (monorepo)                     |
 
 ## 数据库
 
 ### 核心模型
 
-| 表 | 说明 |
-|----|------|
-| `users` | 用户账户（支持 USER/ADMIN 角色） |
-| `refresh_tokens` | JWT 刷新令牌 |
-| `chat_sessions` | 聊天会话（按 userId + updatedAt 索引） |
-| `chat_messages` | 聊天消息（按 sessionId + createdAt 索引，每会话最多 20 条） |
-| `knowledge_collections` | 知识库集合 |
-| `knowledge_documents` | 知识文档（支持分类 + 状态管理） |
-| `knowledge_chunks` | 文档分块（关联 PGVector embedding） |
-| `user_travel_profiles` | 用户旅行画像（JSON 偏好） |
+| 表                      | 说明                                                        |
+| ----------------------- | ----------------------------------------------------------- |
+| `users`                 | 用户账户（支持 USER/ADMIN 角色）                            |
+| `refresh_tokens`        | JWT 刷新令牌                                                |
+| `chat_sessions`         | 聊天会话（按 userId + updatedAt 索引）                      |
+| `chat_messages`         | 聊天消息（按 sessionId + createdAt 索引，每会话最多 20 条） |
+| `knowledge_collections` | 知识库集合                                                  |
+| `knowledge_documents`   | 知识文档（支持分类 + 状态管理）                             |
+| `knowledge_chunks`      | 文档分块（关联 PGVector embedding）                         |
+| `user_travel_profiles`  | 用户旅行画像（JSON 偏好）                                   |
 
 ### 迁移命令
 
